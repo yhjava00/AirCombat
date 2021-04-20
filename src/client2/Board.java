@@ -1,4 +1,4 @@
-package game;
+package client2;
 
 import java.awt.Dimension;
 import java.awt.Toolkit;
@@ -8,9 +8,9 @@ import javax.swing.JFrame;
 public class Board extends JFrame{
 	
 	protected Board() {
-		
+
 		add(new GameField());
-		
+
 		setResizable(false);
 		pack();
 		
