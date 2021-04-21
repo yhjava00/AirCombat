@@ -7,9 +7,9 @@ import javax.swing.JFrame;
 
 public class Board extends JFrame{
 	
-	protected Board() {
+	protected Board(GameField field) {
 
-		add(new GameField());
+		add(field);
 
 		setResizable(false);
 		pack();

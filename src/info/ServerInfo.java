@@ -15,6 +15,14 @@ public class ServerInfo implements Serializable  {
 	
 	public int p1_HP;
 	public int p2_HP;
-
+	
+	public String p1State;
+	public String p2State;
+	
+	public String p1Request;
+	public String p2Request;
+	
 	public boolean end;
+	
+	public String end_msg;
 }

@@ -16,7 +16,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
-import info.Client1Info;
+import info.ClientInfo;
 import info.ServerInfo;
 
 public class GameField extends JPanel implements ActionListener{
@@ -40,8 +40,8 @@ public class GameField extends JPanel implements ActionListener{
 	private Image p1Wave = new ImageIcon(GameField.class.getResource("../image/p1Wave.png")).getImage();
 	private Image p2Wave = new ImageIcon(GameField.class.getResource("../image/p2Wave.png")).getImage();
 	
-	public static ServerInfo sInfo;
-	public static Client1Info cInfo;
+	public ServerInfo sInfo;
+	public ClientInfo cInfo;
 	
 	private Timer timer;
 
@@ -59,6 +59,7 @@ public class GameField extends JPanel implements ActionListener{
 			public void actionPerformed(ActionEvent e) {
 				remove(end_label);
 				remove(restart);
+				cInfo.request = "ready";
 			}
 		});
 		
@@ -76,6 +77,9 @@ public class GameField extends JPanel implements ActionListener{
         
         timer = new Timer(DELAY, this);
         
+	}
+	
+	protected void fieldStart() {
         timer.start();
 	}
 	
@@ -105,6 +109,12 @@ public class GameField extends JPanel implements ActionListener{
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		if(cInfo.state.equals("end")) {
+			end_label.setText(sInfo.end_msg);
+			add(end_label);
+			add(restart);
+			cInfo.state = "";
+		}
 		repaint();
 	}
 	
@@ -114,13 +124,13 @@ public class GameField extends JPanel implements ActionListener{
 		public void keyPressed(KeyEvent ke) { //키 입력
 			switch (ke.getKeyCode()) {
 			case KeyEvent.VK_LEFT:	
-				cInfo.p1Move = "left";
+				cInfo.move = "left";
 				break;
 			case KeyEvent.VK_RIGHT:
-				cInfo.p1Move = "right";	
+				cInfo.move = "right";	
 				break;
-			case KeyEvent.VK_NUMPAD0:
-				cInfo.p1charging = true;
+			case KeyEvent.VK_SPACE:
+				cInfo.charging = true;
 			break;           
 			}
 		}
@@ -129,13 +139,13 @@ public class GameField extends JPanel implements ActionListener{
 		public void keyReleased(KeyEvent ke) {
 			switch(ke.getKeyCode()) {
 			case KeyEvent.VK_LEFT:	
-				cInfo.p1Move = "stop";			
+				cInfo.move = "stop";			
 				break;
 			case KeyEvent.VK_RIGHT:
-				cInfo.p1Move = "stop";
+				cInfo.move = "stop";
 				break;
-			case KeyEvent.VK_NUMPAD0:
-				cInfo.p1charging = false;
+			case KeyEvent.VK_SPACE:
+				cInfo.charging = false;
 				break;
             }
 		}

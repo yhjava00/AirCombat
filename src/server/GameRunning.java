@@ -3,15 +3,14 @@ package server;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import info.Client2Info;
-import info.Client1Info;
+import info.ClientInfo;
 import info.ServerInfo;
 
 public class GameRunning {
 	
-	public static ServerInfo sInfo;
-	public static Client1Info cInfo;
-	public static Client2Info c2Info;
+	public ServerInfo sInfo;
+	public ClientInfo c1Info;
+	public ClientInfo c2Info;
 
 	protected static final int MAP_HEIGHT = 700;
 	protected static final int MAP_WIDTH = 500;
@@ -25,15 +24,20 @@ public class GameRunning {
 	protected final int BULLET_SPEED = 1;
 	protected final int CHARGING_SPEED = 5;
 
+	protected Thread checkEndThread;
 	protected Thread bulletThread;
 	protected Thread bulletChargingThread;
 	protected Thread playerMoveThread;
 	protected Thread bulletCreateThread;
-
+	
 	public GameRunning() {
-		
+		c1Info = new ClientInfo();
+		c2Info = new ClientInfo();
+	}
+
+	protected void gameSetting() {
+
 		sInfo = new ServerInfo(); 
-		cInfo = new Client1Info();
 		
 		sInfo.p1 = new int[] {250, MAP_HEIGHT-PLANE_HEIGHT-20};
 		sInfo.p2 = new int[] {250, 0};
@@ -46,19 +50,32 @@ public class GameRunning {
     	sInfo.p1_HP = 50;
     	sInfo.p2_HP = 50;
     	
-    	cInfo.p1Move = "stop";
-    	c2Info.p2Move = "stop";
+    	c1Info.move = "stop";
+    	c2Info.move = "stop";
     	
-    	cInfo.p1charging = false;
-    	c2Info.p2charging = false;
+    	c1Info.charging = false;
+    	c2Info.charging = false;
+    	
+    	c1Info.state = "";
+    	c2Info.state = "";
     	
     	sInfo.end = false;
-
+    	
+    	sInfo.p1State = "";
+    	sInfo.p2State = "";
+    	
+    	sInfo.p1Request = "";
+    	sInfo.p2Request = "";
+	}
+	
+	protected void gameStart() {
+		checkEndThread = new CheckEndThread();
 		bulletThread = new BulletThread();
 		bulletChargingThread = new BulletChargingThread();
 		playerMoveThread = new PlayerMoveThread();
 		bulletCreateThread = new BulletCreateThread();
 		
+		checkEndThread.start();
         playerMoveThread.start();
         bulletThread.start();
         bulletChargingThread.start();
@@ -70,6 +87,37 @@ public class GameRunning {
 			sInfo.bulletSet.add(new int[] {sInfo.p1[0], MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20, 1});			
 		}else {
 			sInfo.bulletSet.add(new int[] {sInfo.p2[0], PLANE_HEIGHT, 2});
+		}
+	}
+		
+	private boolean checkEnd() {
+		if(sInfo.p1_HP<=0) {
+			sInfo.end_msg = "PLAYER2 WIN!";
+			return true;
+		}
+		if(sInfo.p2_HP<=0) {
+			sInfo.end_msg = "PLAYER1 WIN!";
+			return true;
+		}
+		return false;
+	}
+
+	class CheckEndThread extends Thread {
+		@Override
+		public void run() {
+			while(!sInfo.end) {
+				try {
+					Thread.sleep(1);
+				} catch (Exception e) {}
+				
+				if(checkEnd()) {
+					if(sInfo.p1_HP==sInfo.p2_HP)
+						sInfo.end_msg = "DRAW";
+					sInfo.p1Request = "end";
+					sInfo.p2Request = "end";
+					sInfo.end = true;
+				}
+			}
 		}
 	}
 	
@@ -120,12 +168,12 @@ public class GameRunning {
 					Thread.sleep(1);
 				} catch (Exception e) {}
 				
-				if(!cInfo.p1charging) {
+				if(!c1Info.charging) {
 					if(sInfo.p1_gauge==PLANE_WIDTH)
 						createBullet(0);
 					sInfo.p1_gauge = 0;
 				}
-				if(!c2Info.p2charging) {
+				if(!c2Info.charging) {
 					if(sInfo.p2_gauge==PLANE_WIDTH)
 						createBullet(1);
 					sInfo.p2_gauge = 0;
@@ -144,10 +192,10 @@ public class GameRunning {
 					Thread.sleep(CHARGING_SPEED);
 				} catch (Exception e) {}
 				
-				if(cInfo.p1charging&&(sInfo.p1_gauge<PLANE_WIDTH)) {
+				if(c1Info.charging&&(sInfo.p1_gauge<PLANE_WIDTH)) {
 					sInfo.p1_gauge++;
 				}
-				if(c2Info.p2charging&&(sInfo.p2_gauge<PLANE_WIDTH)) {
+				if(c2Info.charging&&(sInfo.p2_gauge<PLANE_WIDTH)) {
 					sInfo.p2_gauge++;
 				}
 			}
@@ -163,18 +211,18 @@ public class GameRunning {
 					Thread.sleep(1);
 				} catch (Exception e) {}
 				
-				if(c2Info.p2Move.equals("left")) {
+				if(c2Info.move.equals("left")) {
 					if(0<sInfo.p2[0]-(PLANE_WIDTH/2))
 						sInfo.p2[0] -= 1;
-				}else if(c2Info.p2Move.equals("right")) {
+				}else if(c2Info.move.equals("right")) {
 					if(MAP_WIDTH+(PLANE_WIDTH/2) > sInfo.p2[0] + PLANE_WIDTH)
 						sInfo.p2[0] += 1;
 				}
 				
-				if(cInfo.p1Move.equals("left")) {
+				if(c1Info.move.equals("left")) {
 					if(0<sInfo.p1[0]-(PLANE_WIDTH/2))
 						sInfo.p1[0] -= 1;
-				}else if(cInfo.p1Move.equals("right")) {
+				}else if(c1Info.move.equals("right")) {
 					if(MAP_WIDTH+(PLANE_WIDTH/2) > sInfo.p1[0] + PLANE_WIDTH)
 						sInfo.p1[0] += 1;
 				}

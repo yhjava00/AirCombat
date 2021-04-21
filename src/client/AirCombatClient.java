@@ -4,52 +4,60 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-import info.Client1Info;
+import info.ClientInfo;
 import info.ServerInfo;
 
 public class AirCombatClient {
-
-	private static Socket sck;
-
-	private static ObjectOutputStream oos;
-	private static ObjectInputStream ois;
 	
-	public static void main(String[] args) {
+	private Socket sck;
+	
+	protected GameField field;
+
+	private ObjectOutputStream oos;
+	private ObjectInputStream ois;
+	
+	public AirCombatClient() {
 		init();
 	}
 	
-	public static void init() {
+	public void init() {
 		try {
 			sck = new Socket("localhost", 1234);
-			System.out.println("Server Connect");
+			System.out.println("Server Connect");			
+			sck.setTcpNoDelay(true);
+			field = new GameField();
 			
 			oos = new ObjectOutputStream(sck.getOutputStream());
 			ois = new ObjectInputStream(sck.getInputStream());
-
-			GameField.sInfo = (ServerInfo)ois.readObject();
-			GameField.cInfo = (Client1Info)ois.readObject();
 			
-			new Board();
+			field.sInfo = (ServerInfo)ois.readObject();
+			field.cInfo = (ClientInfo)ois.readObject();
 			
-			String state = "play";
-
-			oos.writeObject(state);
-			oos.flush();
+			new Board(field);
+			field.fieldStart();
 			
-			while(!(state=(String)ois.readObject()).equals("exit")) {
+			field.cInfo.request = "ready";
+			
+			while(!field.sInfo.p1State.equals("exit")) {
 
 				try {
 					Thread.sleep(1);
 				} catch (Exception e) {}
-
-				oos.writeObject(GameField.cInfo);
-				oos.flush();
 				
-				GameField.sInfo = (ServerInfo)ois.readObject();
-
-				oos.writeObject(state);
+				oos.writeObject(field.cInfo);
 				oos.flush();
 				oos.reset();
+				
+				if(!field.cInfo.request.equals("")) {
+					field.cInfo.request = "";
+				}
+				
+				field.sInfo = (ServerInfo)ois.readObject();
+				
+				if(field.sInfo.p1Request.equals("end")) {
+					field.cInfo.state = "end";
+				}
+				
 			}
 			sck.close();
 		} catch (Exception e) {
