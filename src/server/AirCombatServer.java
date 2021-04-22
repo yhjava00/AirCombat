@@ -83,14 +83,15 @@ public class AirCombatServer {
 		}
 		
 		private void makeRoom() {
-			info.sInfo.p1Request[0] = "code";
-			info.sInfo.p1Request[1] = makeCode();
 			
 			GameController game = new GameController();
 			
 			game.gameSetting();
 
 			game.connectP1(info);
+
+			info.sInfo.p1Request[0] = "code";
+			info.sInfo.p1Request[1] = makeCode();
 			
 			gameMap.put(info.sInfo.p1Request[1], game);
 		}
@@ -133,6 +134,10 @@ public class AirCombatServer {
 				oos.flush();
 				
 				while(!info.sInfo.p1State.equals("exit")) {
+
+					try {
+						Thread.sleep(1);
+					} catch (Exception e) {}
 					
 					info.cInfo = (ClientInfo) ois.readObject();
 

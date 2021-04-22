@@ -12,17 +12,17 @@ public class GameController {
 	public ClientInfo c1Info;
 	public ClientInfo c2Info;
 
-	protected final int MAP_HEIGHT = 700;
-	protected final int MAP_WIDTH = 500;
+	private final int MAP_HEIGHT = 700;
+	private final int MAP_WIDTH = 500;
 	
-	protected final int PLANE_HEIGHT = 37;
-	protected final int PLANE_WIDTH = 50;
+	private final int PLANE_HEIGHT = 37;
+	private final int PLANE_WIDTH = 50;
 	
-	protected final int BULLET_HEIGHT = 22;
-	protected final int BULLET_WIDTH = 25;
+	private final int BULLET_HEIGHT = 22;
+	private final int BULLET_WIDTH = 25;
 	
-	protected final int BULLET_SPEED = 1;
-	protected final int CHARGING_SPEED = 5;
+	private final int BULLET_SPEED = 1;
+	private final int CHARGING_SPEED = 5;
 
 	private Thread exchangeP1InfoThread;
 	private Thread exchangeP2InfoThread;
@@ -35,24 +35,30 @@ public class GameController {
 	private Thread bulletCreateThread;
 	
 	public GameController() {
+		sInfo = new ServerInfo(); 
+		
 		gameStartThread = new GameStartThread();
 		gameStartThread.start();
 	}
 	
 	public void connectP1(InfoController p1Info) {
+		
+		p1Info.sInfo = sInfo;
+		
 		exchangeP1InfoThread = new ExchangeP1InfoThread(p1Info);
 		exchangeP1InfoThread.start();
 	}
 	
 	public void connectP2(InfoController p2Info) {
+		
+		p2Info.sInfo = sInfo;
+		
 		exchangeP2InfoThread = new ExchangeP2InfoThread(p2Info);
 		exchangeP2InfoThread.start();
 	}
 	
 	protected void gameSetting() {
 
-		sInfo = new ServerInfo(); 
-		
 		sInfo.p1 = new int[] {250, MAP_HEIGHT-PLANE_HEIGHT-20};
 		sInfo.p2 = new int[] {250, 0};
 		
@@ -118,13 +124,14 @@ public class GameController {
 		
 		@Override
 		public void run() {
-			while(!sInfo.end) {
+			while(true) {
 				try {
 					Thread.sleep(1);
 				} catch (Exception e) {}
 				
 				c1Info = p1Info.cInfo;
 				p1Info.sInfo = sInfo;
+				
 			}
 		}
 	}
@@ -138,7 +145,7 @@ public class GameController {
 		
 		@Override
 		public void run() {
-			while(!sInfo.end) {
+			while(true) {
 				try {
 					Thread.sleep(1);
 				} catch (Exception e) {}
@@ -157,7 +164,6 @@ public class GameController {
 				} catch (Exception e) {}
 				
 				if(sInfo.p1State.equals("ready")&&sInfo.p2State.equals("ready")) {
-
 					gameSetting();
 					sInfo.p1State = "run";
 					sInfo.p2State = "run";

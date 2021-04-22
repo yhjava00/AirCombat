@@ -10,18 +10,17 @@ import info.ServerInfo;
 public class AirCombatClient {
 	
 	private Socket sck;
-
+	
 	public GameInfo info;
 
 	private ObjectOutputStream oos;
 	private ObjectInputStream ois;
-
+	
 	private WaitingBoard waitingBoard;
 	
 	public AirCombatClient() {
 		init();
 	}
-
 	private void ProcessServerRequest(String[] request) {
 		switch (request[0]) {
 		case "":
@@ -35,7 +34,6 @@ public class AirCombatClient {
 			break;
 		}
 	}
-	
 	public void init() {
 		try {
 			sck = new Socket("localhost", 1234);
@@ -57,14 +55,10 @@ public class AirCombatClient {
 			
 			while(!info.sInfo.p1State.equals("exit")) {
 
-				try {
-					Thread.sleep(1);
-				} catch (Exception e) {}
-
 				oos.writeObject(info.cInfo);
 				oos.flush();
 				oos.reset();
-
+				
 				if(!info.cInfo.request[0].equals("")) {
 					info.cInfo.request[0] = "";
 				}
@@ -72,7 +66,6 @@ public class AirCombatClient {
 				info.sInfo = (ServerInfo)ois.readObject();
 				
 				ProcessServerRequest(info.sInfo.p1Request);
-				
 			}
 			sck.close();
 		} catch (Exception e) {
