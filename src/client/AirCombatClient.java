@@ -10,14 +10,30 @@ import info.ServerInfo;
 public class AirCombatClient {
 	
 	private Socket sck;
-	
-	protected GameField field;
+
+	public GameInfo info;
 
 	private ObjectOutputStream oos;
 	private ObjectInputStream ois;
+
+	private WaitingBoard waitingBoard;
 	
 	public AirCombatClient() {
 		init();
+	}
+
+	private void ProcessServerRequest(String[] request) {
+		switch (request[0]) {
+		case "":
+			break;
+		case "end":
+			info.cInfo.state = "end";
+			break;
+		case "code":
+			waitingBoard.setCode(request[1]);
+			new GameBoard(info);
+			break;
+		}
 	}
 	
 	public void init() {
@@ -25,38 +41,37 @@ public class AirCombatClient {
 			sck = new Socket("localhost", 1234);
 			System.out.println("Server Connect");			
 			sck.setTcpNoDelay(true);
-			field = new GameField();
 			
 			oos = new ObjectOutputStream(sck.getOutputStream());
 			ois = new ObjectInputStream(sck.getInputStream());
 			
-			field.sInfo = (ServerInfo)ois.readObject();
-			field.cInfo = (ClientInfo)ois.readObject();
+			info = new GameInfo();
 			
-			new Board(field);
-			field.fieldStart();
+			info.sInfo = (ServerInfo)ois.readObject();
+			info.cInfo = (ClientInfo)ois.readObject();
 			
-			field.cInfo.request = "ready";
+			waitingBoard = new WaitingBoard(info);
+//			new GameBoard(info);
 			
-			while(!field.sInfo.p1State.equals("exit")) {
+			info.cInfo.request = new String[] {"", ""};
+			
+			while(!info.sInfo.p1State.equals("exit")) {
 
 				try {
 					Thread.sleep(1);
 				} catch (Exception e) {}
-				
-				oos.writeObject(field.cInfo);
+
+				oos.writeObject(info.cInfo);
 				oos.flush();
 				oos.reset();
-				
-				if(!field.cInfo.request.equals("")) {
-					field.cInfo.request = "";
+
+				if(!info.cInfo.request[0].equals("")) {
+					info.cInfo.request[0] = "";
 				}
 				
-				field.sInfo = (ServerInfo)ois.readObject();
+				info.sInfo = (ServerInfo)ois.readObject();
 				
-				if(field.sInfo.p1Request.equals("end")) {
-					field.cInfo.state = "end";
-				}
+				ProcessServerRequest(info.sInfo.p1Request);
 				
 			}
 			sck.close();

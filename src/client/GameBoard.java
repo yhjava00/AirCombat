@@ -5,11 +5,17 @@ import java.awt.Toolkit;
 
 import javax.swing.JFrame;
 
-public class Board extends JFrame{
-	
-	protected Board(GameField field) {
+import panel.GamePanel;
 
-		add(field);
+public class GameBoard extends JFrame{
+	
+	GameInfo info;
+	
+	public GameBoard(GameInfo info) {
+		
+		this.info = info;
+		
+		add(new GamePanel(info));
 
 		setResizable(false);
 		pack();

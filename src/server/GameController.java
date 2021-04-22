@@ -6,14 +6,14 @@ import java.util.Iterator;
 import info.ClientInfo;
 import info.ServerInfo;
 
-public class GameRunning {
+public class GameController {
 	
 	public ServerInfo sInfo;
 	public ClientInfo c1Info;
 	public ClientInfo c2Info;
 
-	protected static final int MAP_HEIGHT = 700;
-	protected static final int MAP_WIDTH = 500;
+	protected final int MAP_HEIGHT = 700;
+	protected final int MAP_WIDTH = 500;
 	
 	protected final int PLANE_HEIGHT = 37;
 	protected final int PLANE_WIDTH = 50;
@@ -24,17 +24,31 @@ public class GameRunning {
 	protected final int BULLET_SPEED = 1;
 	protected final int CHARGING_SPEED = 5;
 
-	protected Thread checkEndThread;
-	protected Thread bulletThread;
-	protected Thread bulletChargingThread;
-	protected Thread playerMoveThread;
-	protected Thread bulletCreateThread;
+	private Thread exchangeP1InfoThread;
+	private Thread exchangeP2InfoThread;
 	
-	public GameRunning() {
-		c1Info = new ClientInfo();
-		c2Info = new ClientInfo();
+	private Thread gameStartThread;
+	private Thread checkEndThread;
+	private Thread bulletThread;
+	private Thread bulletChargingThread;
+	private Thread playerMoveThread;
+	private Thread bulletCreateThread;
+	
+	public GameController() {
+		gameStartThread = new GameStartThread();
+		gameStartThread.start();
 	}
-
+	
+	public void connectP1(InfoController p1Info) {
+		exchangeP1InfoThread = new ExchangeP1InfoThread(p1Info);
+		exchangeP1InfoThread.start();
+	}
+	
+	public void connectP2(InfoController p2Info) {
+		exchangeP2InfoThread = new ExchangeP2InfoThread(p2Info);
+		exchangeP2InfoThread.start();
+	}
+	
 	protected void gameSetting() {
 
 		sInfo = new ServerInfo(); 
@@ -50,22 +64,14 @@ public class GameRunning {
     	sInfo.p1_HP = 50;
     	sInfo.p2_HP = 50;
     	
-    	c1Info.move = "stop";
-    	c2Info.move = "stop";
-    	
-    	c1Info.charging = false;
-    	c2Info.charging = false;
-    	
-    	c1Info.state = "";
-    	c2Info.state = "";
-    	
     	sInfo.end = false;
     	
     	sInfo.p1State = "";
     	sInfo.p2State = "";
+
+    	sInfo.p1Request = new String[] {"", ""};
+    	sInfo.p2Request = new String[] {"", ""};
     	
-    	sInfo.p1Request = "";
-    	sInfo.p2Request = "";
 	}
 	
 	protected void gameStart() {
@@ -101,7 +107,65 @@ public class GameRunning {
 		}
 		return false;
 	}
+	
+	class ExchangeP1InfoThread extends Thread {
+		
+		InfoController p1Info;
+		
+		public ExchangeP1InfoThread(InfoController p1Info) {
+			this.p1Info = p1Info;
+		}
+		
+		@Override
+		public void run() {
+			while(!sInfo.end) {
+				try {
+					Thread.sleep(1);
+				} catch (Exception e) {}
+				
+				c1Info = p1Info.cInfo;
+				p1Info.sInfo = sInfo;
+			}
+		}
+	}
+	class ExchangeP2InfoThread extends Thread {
+		
+		InfoController p2Info;
+		
+		public ExchangeP2InfoThread(InfoController p2Info) {
+			this.p2Info = p2Info;
+		}
+		
+		@Override
+		public void run() {
+			while(!sInfo.end) {
+				try {
+					Thread.sleep(1);
+				} catch (Exception e) {}
+				
+				c2Info = p2Info.cInfo;
+				p2Info.sInfo = sInfo;
+			}
+		}
+	}
+	class GameStartThread extends Thread {
+		@Override
+		public void run() {
+			while(true) {
+				try {
+					Thread.sleep(1);
+				} catch (Exception e) {}
+				
+				if(sInfo.p1State.equals("ready")&&sInfo.p2State.equals("ready")) {
 
+					gameSetting();
+					sInfo.p1State = "run";
+					sInfo.p2State = "run";
+					gameStart();
+				}
+			}
+		}
+	}
 	class CheckEndThread extends Thread {
 		@Override
 		public void run() {
@@ -113,8 +177,8 @@ public class GameRunning {
 				if(checkEnd()) {
 					if(sInfo.p1_HP==sInfo.p2_HP)
 						sInfo.end_msg = "DRAW";
-					sInfo.p1Request = "end";
-					sInfo.p2Request = "end";
+					sInfo.p1Request[0] = "end";
+					sInfo.p2Request[0] = "end";
 					sInfo.end = true;
 				}
 			}

@@ -5,9 +5,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.channels.SocketChannel;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import info.ClientInfo;
 
@@ -15,16 +16,20 @@ public class AirCombatServer {
 
 	private ServerSocket server;
 	
-	private GameRunning game;
-	private List<Thread> threadList = new LinkedList<>();
+	private InfoController info;
+	
+	private List<Thread> clientList = new LinkedList<>();
+	
+	private Map<String, GameController> gameMap = new HashMap<>();
+	
+	private char[] codeSource = {
+								'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+								'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+								'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+								'U', 'V', 'W', 'X', 'Y', 'Z'
+								};
 
 	public AirCombatServer() {
-		game = new GameRunning();
-		
-		Thread gameStartThread = new GameStartThread(game);
-		gameStartThread.start();
-		
-		game.gameSetting();
 		init();
 	}
 	
@@ -33,142 +38,128 @@ public class AirCombatServer {
 			server = new ServerSocket(1234);
 			
 			while(true) {
+				
+				info = new InfoController();
+				info.Setting();
+				
 				System.out.println("wait client");
 				
 				Socket sck = server.accept();
-				Thread ct1 = new Client1Thread(sck, game);
+				Thread ct = new ClientThread(sck, info, 1);
 				sck.setTcpNoDelay(true);
-				threadList.add(ct1);
-				ct1.start();
 				
-				Socket sck2 = server.accept();
-				Thread ct2 = new Client2Thread(sck2, game);
-				sck2.setTcpNoDelay(true);
-				threadList.add(ct2);
-				ct2.start();
+				clientList.add(ct);
+				ct.start();
 				
 			}
 		} catch (IOException e) {}
 		
 	}
+	
+	class ClientThread extends Thread {
+		
+		private Socket sck;
+		private InfoController info;
+		private int clientNum;
+		
+		private ObjectOutputStream oos;
+		private ObjectInputStream ois;
+		
+		public ClientThread(Socket sck, InfoController info, int clientNum) {
+			this.sck = sck;
+			this.info = info;
+			this.clientNum = clientNum;
+		}
+		
+		private String makeCode() {
+			
+			String code = "";
+			
+			for(int i=0; i<6; i++) {
+				code += codeSource[(int)(Math.random()*codeSource.length)];
+			}
+			
+			return code;
+		}
+		
+		private void makeRoom() {
+			info.sInfo.p1Request[0] = "code";
+			info.sInfo.p1Request[1] = makeCode();
+			
+			GameController game = new GameController();
+			
+			game.gameSetting();
 
-}
-class GameStartThread extends Thread {
-	
-	GameRunning game;
-	
-	public GameStartThread(GameRunning game) {
-		this.game = game;
-	}
-	
-	@Override
-	public void run() {
-		while(true) {
+			game.connectP1(info);
+			
+			gameMap.put(info.sInfo.p1Request[1], game);
+		}
+		
+		private void connectRoom(String code) {
+			GameController game = gameMap.get(code);
+			clientNum = 2;
+			game.connectP2(info);
+		}
+		
+		private void ProcessClientRequest(int clientNum, String[] request) {
+			switch (clientNum + request[0]) {
+			case "1":
+				break;
+			case "2":
+				break;
+			case "1ready":
+				info.sInfo.p1State = "ready";
+				break;
+			case "2ready":
+				info.sInfo.p2State = "ready";
+				break;
+			case "1makeRoom":
+				makeRoom();
+				break;
+			case "1code":
+				connectRoom(request[1]);
+				break;
+			}
+		}
+		
+		@Override
+		public void run() {
 			try {
-				Thread.sleep(1);
-			} catch (Exception e) {}
-			
-			if(game.sInfo.p1State.equals("ready")&&game.sInfo.p2State.equals("ready")) {
-
-				game.gameSetting();
-				game.sInfo.p1State = "run";
-				game.sInfo.p2State = "run";
-				game.gameStart();
-			}
-		}
-	}
-}
-class Client1Thread extends Thread {
-	
-	private Socket sck;
-	private GameRunning game;
-	
-	private ObjectOutputStream oos;
-	private ObjectInputStream ois;
-	
-	public Client1Thread(Socket sck, GameRunning game) {
-		this.sck = sck;
-		this.game = game;
-	}
-	
-	@Override
-	public void run() {
-		try {
-			oos = new ObjectOutputStream(sck.getOutputStream());
-			ois = new ObjectInputStream(sck.getInputStream());
-			
-			oos.writeObject(game.sInfo);
-			oos.writeObject(game.c1Info);
-			oos.flush();
-			
-			while(!game.sInfo.p1State.equals("exit")) {
+				oos = new ObjectOutputStream(sck.getOutputStream());
+				ois = new ObjectInputStream(sck.getInputStream());
 				
-				game.c1Info = (ClientInfo) ois.readObject();
-
-				if(game.c1Info.request.equals("ready")) {
-					game.sInfo.p1State = "ready";
-				}
-				
-				oos.writeObject(game.sInfo);
+				oos.writeObject(info.sInfo);
+				oos.writeObject(info.cInfo);
 				oos.flush();
-				oos.reset();
 				
-				if(!game.sInfo.p1Request.equals("")) {
-					game.sInfo.p1Request = "";
-				}
-				
-			}
-			sck.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-}
-class Client2Thread extends Thread {
-	
-	private Socket sck;
-	private GameRunning game;
-	
-	private ObjectOutputStream oos;
-	private ObjectInputStream ois;
-	
-	public Client2Thread(Socket sck, GameRunning game) {
-		this.sck = sck;
-		this.game = game;
-	}
-	
-	@Override
-	public void run() {
-		try {
-			oos = new ObjectOutputStream(sck.getOutputStream());
-			ois = new ObjectInputStream(sck.getInputStream());
-			
-			oos.writeObject(game.sInfo);
-			oos.writeObject(game.c2Info);
-			oos.flush();
-			
-			while(!game.sInfo.p1State.equals("exit")) {
-				
-				game.c2Info = (ClientInfo) ois.readObject();
+				while(!info.sInfo.p1State.equals("exit")) {
+					
+					info.cInfo = (ClientInfo) ois.readObject();
 
-				if(game.c2Info.request.equals("ready")) {
-					game.sInfo.p2State = "ready";
+					ProcessClientRequest(clientNum, info.cInfo.request);
+					
+					oos.writeObject(info.sInfo);
+					oos.flush();
+					oos.reset();
+					
+					if(clientNum==1) {
+						if(!info.sInfo.p1Request[0].equals("")) {
+							info.sInfo.p1Request[0] = "";
+							info.sInfo.p1Request[1] = "";
+						}
+					}else {
+						if(!info.sInfo.p2Request[0].equals("")) {
+							info.sInfo.p2Request[0] = "";
+							info.sInfo.p2Request[1] = "";
+						}
+					}
+					
 				}
-				
-				oos.writeObject(game.sInfo);
-				oos.flush();
-				oos.reset();
-
-				if(!game.sInfo.p2Request.equals("")) {
-					game.sInfo.p2Request = "";
-				}
-				
+				sck.close();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			sck.close();
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
+		
 	}
-	
 }
