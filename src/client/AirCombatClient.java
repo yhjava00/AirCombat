@@ -36,7 +36,7 @@ public class AirCombatClient {
 	}
 	public void init() {
 		try {
-			sck = new Socket("192.168.1.32", 1234);
+			sck = new Socket("localhost", 1234);
 			System.out.println("Server Connect");			
 			sck.setTcpNoDelay(true);
 			
