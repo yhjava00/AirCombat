@@ -19,10 +19,9 @@ public class ServerInfo implements Serializable  {
 	public String p1State;
 	public String p2State;
 	
-	public String[] p1Request;
-	public String[] p2Request;
-	
-	public boolean end;
+	public int[][] wall; // 추가
+
+	public String[] request;
 	
 	public String end_msg;
 }

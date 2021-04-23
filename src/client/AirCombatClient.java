@@ -36,7 +36,7 @@ public class AirCombatClient {
 	}
 	public void init() {
 		try {
-			sck = new Socket("localhost", 1234);
+			sck = new Socket("192.168.1.32", 1234);
 			System.out.println("Server Connect");			
 			sck.setTcpNoDelay(true);
 			
@@ -62,10 +62,10 @@ public class AirCombatClient {
 				if(!info.cInfo.request[0].equals("")) {
 					info.cInfo.request[0] = "";
 				}
-				
+				// 오류 java.io.StreamCorruptedException
 				info.sInfo = (ServerInfo)ois.readObject();
 				
-				ProcessServerRequest(info.sInfo.p1Request);
+				ProcessServerRequest(info.sInfo.request);
 			}
 			sck.close();
 		} catch (Exception e) {

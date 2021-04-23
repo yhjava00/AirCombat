@@ -45,7 +45,7 @@ public class AirCombatServer {
 				System.out.println("wait client");
 				
 				Socket sck = server.accept();
-				Thread ct = new ClientThread(sck, info, 1);
+				Thread ct = new ClientThread(sck, info);
 				sck.setTcpNoDelay(true);
 				
 				clientList.add(ct);
@@ -60,22 +60,22 @@ public class AirCombatServer {
 		
 		private Socket sck;
 		private InfoController info;
-		private int clientNum;
 		
 		private ObjectOutputStream oos;
 		private ObjectInputStream ois;
 		
-		public ClientThread(Socket sck, InfoController info, int clientNum) {
+		private boolean check = false;
+		
+		public ClientThread(Socket sck, InfoController info) {
 			this.sck = sck;
 			this.info = info;
-			this.clientNum = clientNum;
 		}
 		
 		private String makeCode() {
 			
 			String code = "";
 			
-			for(int i=0; i<6; i++) {
+			for(int i=0; i<4; i++) {
 				code += codeSource[(int)(Math.random()*codeSource.length)];
 			}
 			
@@ -90,34 +90,32 @@ public class AirCombatServer {
 
 			game.connectP1(info);
 
-			info.sInfo.p1Request[0] = "code";
-			info.sInfo.p1Request[1] = makeCode();
+			info.sInfo.request[0] = "code";
+			info.sInfo.request[1] = makeCode();
 			
-			gameMap.put(info.sInfo.p1Request[1], game);
+			gameMap.put(info.sInfo.request[1], game);
 		}
 		
 		private void connectRoom(String code) {
 			GameController game = gameMap.get(code);
-			clientNum = 2;
 			game.connectP2(info);
+			check = true;
 		}
 		
-		private void ProcessClientRequest(int clientNum, String[] request) {
-			switch (clientNum + request[0]) {
-			case "1":
+		private void ProcessClientRequest(String[] request) {
+			switch (request[0]) {
+			case "":
 				break;
-			case "2":
+			case "ready":
+				if(!info.sInfo.p1State.equals("ready"))
+					info.sInfo.p1State = "ready";
+				else
+					info.sInfo.p2State = "ready";
 				break;
-			case "1ready":
-				info.sInfo.p1State = "ready";
-				break;
-			case "2ready":
-				info.sInfo.p2State = "ready";
-				break;
-			case "1makeRoom":
+			case "makeRoom":
 				makeRoom();
 				break;
-			case "1code":
+			case "code":
 				connectRoom(request[1]);
 				break;
 			}
@@ -135,28 +133,21 @@ public class AirCombatServer {
 				
 				while(!info.sInfo.p1State.equals("exit")) {
 
-					try {
-						Thread.sleep(1);
-					} catch (Exception e) {}
+					Thread.sleep(1);
 					
 					info.cInfo = (ClientInfo) ois.readObject();
 
-					ProcessClientRequest(clientNum, info.cInfo.request);
+					ProcessClientRequest(info.cInfo.request);
 					
+					// 오류 java.util.ConcurrentModificationException
+
 					oos.writeObject(info.sInfo);
 					oos.flush();
 					oos.reset();
 					
-					if(clientNum==1) {
-						if(!info.sInfo.p1Request[0].equals("")) {
-							info.sInfo.p1Request[0] = "";
-							info.sInfo.p1Request[1] = "";
-						}
-					}else {
-						if(!info.sInfo.p2Request[0].equals("")) {
-							info.sInfo.p2Request[0] = "";
-							info.sInfo.p2Request[1] = "";
-						}
+					if(!info.sInfo.request[0].equals("")) {
+						info.sInfo.request[0] = "";
+						info.sInfo.request[1] = "";
 					}
 					
 				}

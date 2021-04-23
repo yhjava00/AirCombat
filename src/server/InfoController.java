@@ -47,13 +47,10 @@ public class InfoController {
     	
     	cInfo.state = "";
     	
-    	sInfo.end = false;
-    	
     	sInfo.p1State = "";
     	sInfo.p2State = "";
 
-    	sInfo.p1Request = new String[] {"", ""};
-    	sInfo.p2Request = new String[] {"", ""};
+    	sInfo.request = new String[] {"", ""};
 	}
 	
 	
