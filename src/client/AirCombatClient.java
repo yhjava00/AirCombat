@@ -3,69 +3,63 @@ package client;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-import info.ClientInfo;
-import info.ServerInfo;
+import info.GameInfo;
+import panel.GamePanel;
+import panel.WaitingPanel;
 
 public class AirCombatClient {
-	
+
 	private Socket sck;
-	
-	public GameInfo info;
 
 	private ObjectOutputStream oos;
 	private ObjectInputStream ois;
+
+	protected Set<String> clientRequest;
+	private Set<String> serverRequest;
 	
-	private WaitingBoard waitingBoard;
+	public Map<String, Object> info;
+	
+	protected static String code = "";
+	
+	public static GamePanel gamePanel;
 	
 	public AirCombatClient() {
-		init();
-	}
-	private void ProcessServerRequest(String[] request) {
-		switch (request[0]) {
-		case "":
-			break;
-		case "end":
-			info.cInfo.state = "end";
-			break;
-		case "code":
-			waitingBoard.setCode(request[1]);
-			new GameBoard(info);
-			break;
-		}
-	}
-	public void init() {
 		try {
-			sck = new Socket("localhost", 1234);
-			System.out.println("Server Connect");			
+			sck = new Socket("localhost", 1234);			
 			sck.setTcpNoDelay(true);
+
+			System.out.println("Server Connect");
+			
+			clientRequest = new HashSet<String>();
 			
 			oos = new ObjectOutputStream(sck.getOutputStream());
 			ois = new ObjectInputStream(sck.getInputStream());
 			
-			info = new GameInfo();
+			info = (Map)ois.readObject();
 			
-			info.sInfo = (ServerInfo)ois.readObject();
-			info.cInfo = (ClientInfo)ois.readObject();
+			gamePanel = new GamePanel();
 			
-			waitingBoard = new WaitingBoard(info);
-//			new GameBoard(info);
+			new WaitingBoard(clientRequest);
 			
-			info.cInfo.request = new String[] {"", ""};
-			
-			while(!info.sInfo.p1State.equals("exit")) {
+			while(!info.containsKey("exit")) {
 
-				oos.writeObject(info.cInfo);
+				// 클라이언트의 요청 저장
+				saveClientRequest();
+				
+				oos.writeObject(info);
 				oos.flush();
 				oos.reset();
+
+				info = (Map)ois.readObject();
 				
-				if(!info.cInfo.request[0].equals("")) {
-					info.cInfo.request[0] = "";
-				}
-				// 오류 java.io.StreamCorruptedException
-				info.sInfo = (ServerInfo)ois.readObject();
+				// 서버의 요청 처리
+				processServerRequest();
 				
-				ProcessServerRequest(info.sInfo.request);
+				info.clear();				
 			}
 			sck.close();
 		} catch (Exception e) {
@@ -73,4 +67,50 @@ public class AirCombatClient {
 		}
 	}
 	
+	private void saveClientRequest() {
+		
+		for(String request : clientRequest) {
+			switch (request) {
+			case "makeRoom":
+				info.put("makeRoom", null);
+				break;
+			case "code":
+				info.put("code", code);
+				break;
+			case "pInfo":
+				info.put("pInfo", gamePanel.pInfo);
+				break;
+			}
+		}
+		
+		clientRequest.clear();
+	}
+	
+	private void processServerRequest() {
+		
+		if(info.isEmpty())
+			return;
+		
+		serverRequest = info.keySet();
+		
+		for(String request : serverRequest) {
+			switch (request) {
+			case "roomIn":
+				WaitingPanel.setCode((String) info.get("roomIn"));
+				new GameBoard(gamePanel);
+				break;
+			case "gameInfo":
+				gamePanel.gameInfo = (GameInfo) info.get("gameInfo");
+				gamePanel.repaint();
+				clientRequest.add("pInfo");
+				break;
+			case "gameStart":
+				gamePanel.pInfo.ready = false;
+				break;
+			case "gameEnd":
+				gamePanel.addLabelAndButton();
+				break;
+			}
+		}
+	}
 }

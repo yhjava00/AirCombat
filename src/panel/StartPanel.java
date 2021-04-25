@@ -8,14 +8,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import client.AirCombatClient;
 import client.GameBoard;
-import client.GameInfo;
 import client.WaitingBoard;
 
 public class StartPanel extends JPanel {
 
 	WaitingBoard board;
-	GameInfo info;
 	
 	JButton makeRoom = new JButton("MAKE ROOM");
 	JLabel label = new JLabel("Please enter the code");
@@ -23,9 +22,8 @@ public class StartPanel extends JPanel {
 	JButton sendCode = new JButton("SEND CODE");
 	
 	
-	public StartPanel(WaitingBoard board, GameInfo info) {
+	public StartPanel(WaitingBoard board) {
 		this.board = board;
-		this.info = info;
 		
         setLayout(null);
         setBounds(0, 0, 400, 400);
@@ -48,7 +46,7 @@ public class StartPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				board.sendCode(code.getText());
-				new GameBoard(info);
+				new GameBoard(AirCombatClient.gamePanel);
 			}
 		});
         add(makeRoom);

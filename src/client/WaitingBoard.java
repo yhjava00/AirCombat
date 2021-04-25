@@ -1,5 +1,8 @@
 package client;
 
+import java.util.Map;
+import java.util.Set;
+
 import javax.swing.JFrame;
 
 import panel.StartPanel;
@@ -7,17 +10,17 @@ import panel.WaitingPanel;
 
 public class WaitingBoard extends JFrame {
 	
-	GameInfo info;
+	Set<String> clientRequest;
 	
 	StartPanel startPage;
 	WaitingPanel waitingPage;
 	
-	public WaitingBoard(GameInfo info) {
+	public WaitingBoard(Set<String> clientRequest) {
 		
-		this.info = info;
+		this.clientRequest = clientRequest;
 		
-		startPage = new StartPanel(this, info);
-		waitingPage = new WaitingPanel(this, info);
+		startPage = new StartPanel(this);
+		waitingPage = new WaitingPanel(this);
 		
 		setSize(400,400);
 		
@@ -34,23 +37,21 @@ public class WaitingBoard extends JFrame {
 	}
 	
 	public void makeRoom() {
-		info.cInfo.request[0] = "makeRoom";
+		clientRequest.add("makeRoom");
+		
 		startPage.setVisible(false);
 		waitingPage.setVisible(true);
 	}
 	
 	public void sendCode(String code) {
-		info.cInfo.request[0] = "code";
-		info.cInfo.request[1] = code;
+		clientRequest.add("code");
 		
-		waitingPage.setCode(code);
+		AirCombatClient.code = code;
+		
+		WaitingPanel.setCode(code);
 		
 		startPage.setVisible(false);
 		waitingPage.setVisible(true);
-	}
-	
-	public void setCode(String code) {
-		waitingPage.setCode(code);
 	}
 	
 }

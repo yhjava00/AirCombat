@@ -5,18 +5,15 @@ import java.awt.Toolkit;
 
 import javax.swing.JFrame;
 
+import info.GameInfo;
 import panel.GamePanel;
 
 public class GameBoard extends JFrame{
 	
-	GameInfo info;
-	
-	public GameBoard(GameInfo info) {
+	public GameBoard(GamePanel gamePanel) {
 		
-		this.info = info;
+		add(gamePanel);
 		
-		add(new GamePanel(info));
-
 		setResizable(false);
 		pack();
 		

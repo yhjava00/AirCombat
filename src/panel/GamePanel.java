@@ -11,17 +11,28 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.HashSet;
 
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
-import client.GameInfo;
+import info.GameInfo;
+import info.PlayerInfo;
 
-public class GamePanel extends JPanel implements ActionListener{
+public class GamePanel extends JPanel{
+
+	private final int MAP_HEIGHT = 700;
+	private final int MAP_WIDTH = 500;
 	
-	private Label end_label = new Label();
-	private Button restart = new Button("restart");
+	private final int PLANE_HEIGHT = 37;
+	private final int PLANE_WIDTH = 50;
+	
+	private final int BULLET_HEIGHT = 22;
+	private final int BULLET_WIDTH = 25;
+	
+	public Label end_label = new Label();
+	private Button ready = new Button("ready");
 
 	private Image plane1 = new ImageIcon(GamePanel.class.getResource("../image/plane1.png")).getImage();
 	private Image plane2 = new ImageIcon(GamePanel.class.getResource("../image/plane2.png")).getImage();
@@ -31,90 +42,85 @@ public class GamePanel extends JPanel implements ActionListener{
 	private Image wallImg = new ImageIcon(GamePanel.class.getResource("../image/wall.png")).getImage();
 	private Image backgroundImg = new ImageIcon(GamePanel.class.getResource("../image/background.png")).getImage();
 	
-	private GameInfo info;
-	
-	private Timer timer;
+	public GameInfo gameInfo;
+	public PlayerInfo pInfo;
 
 	private void setLabelAndButton() {
 		
-		end_label.setBackground(Color.BLACK);
+		end_label.setBackground(Color.lightGray);
 		end_label.setFont(new Font("Serif", Font.BOLD, 21));
-		end_label.setForeground(Color.blue);
+		end_label.setForeground(Color.black);
 		end_label.setAlignment(Label.CENTER);
-		end_label.setBounds(info.MAP_WIDTH/2-75, 50, 150, 75);
+		end_label.setBounds(0, 30, MAP_WIDTH, 50);
 		
-		restart.setBounds(info.MAP_WIDTH/2-37, 130, 75, 30);
-		restart.addActionListener(new ActionListener() {
+		ready.setBounds(MAP_WIDTH/2-37, 130, 75, 30);
+		ready.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				remove(end_label);
-				remove(restart);
-				info.cInfo.request[0] = "ready";
+				remove(ready);
+				pInfo.ready = true;
 			}
 		});
 		
 	}
 	
-	public GamePanel(GameInfo info) {
+	public GamePanel() {
 		
-		this.info = info;
-		
-        setBackground(Color.black);
+		setLayout(null);
         setFocusable(true);
-        setPreferredSize(new Dimension(info.MAP_WIDTH, info.MAP_HEIGHT));
+        setPreferredSize(new Dimension(MAP_WIDTH, MAP_HEIGHT));
         
         addKeyListener(new Plane1Adapter());
         
         setLabelAndButton();
-
-		add(end_label);
-		add(restart);
-		
-        timer = new Timer(info.DELAY, this);
-        timer.start();
         
+        pInfo = new PlayerInfo();
+        
+        pInfo.move = "stop";
+        pInfo.charging = false;
+        pInfo.ready = false;
+        
+		add(ready);
 	}
 	
+	public void addLabelAndButton() {
+		
+		end_label.setText(gameInfo.end_msg);
+		
+		add(end_label);
+		add(ready);
+	}
+
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		
 		g.drawImage(backgroundImg , 0 , 0 , null); // 추가
 		
-		g.drawImage(plane1, info.sInfo.p1[0]-(info.PLANE_WIDTH/2), info.sInfo.p1[1], null);
-		g.drawImage(plane2, info.sInfo.p2[0]-(info.PLANE_WIDTH/2), info.sInfo.p2[1], null);
+		g.drawImage(plane1, gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1], null);
+		g.drawImage(plane2, gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1], null);
 		
 		g.setColor(Color.yellow);
-		g.fillRect(info.sInfo.p1[0]-(info.PLANE_WIDTH/2), info.sInfo.p1[1]+37, info.sInfo.p1_gauge, 10);
-		g.fillRect(info.sInfo.p2[0]-(info.PLANE_WIDTH/2), info.sInfo.p2[1]+37, info.sInfo.p2_gauge, 10);
+		g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+37, gameInfo.p1_gauge, 10);
+		g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+37, gameInfo.p2_gauge, 10);
 
 		g.setColor(Color.RED);
-		g.fillRect(info.sInfo.p1[0]-(info.PLANE_WIDTH/2), info.sInfo.p1[1]+47 , info.sInfo.p1_HP , 10);
-		g.fillRect(info.sInfo.p2[0]-(info.PLANE_WIDTH/2), info.sInfo.p2[1]+47 , info.sInfo.p2_HP , 10);
+		g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+47 , gameInfo.p1_HP , 10);
+		g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+47 , gameInfo.p2_HP , 10);
 
-		g.drawImage(wallImg, info.sInfo.wall[0][0], info.sInfo.wall[0][1], null); // 추가
-		g.drawImage(wallImg, info.sInfo.wall[1][0], info.sInfo.wall[1][1], null); // 추가
-		g.drawImage(wallImg, info.sInfo.wall[2][0], info.sInfo.wall[2][1], null); // 추가
+		g.drawImage(wallImg, gameInfo.wall[0][0], gameInfo.wall[0][1], null); // 추가
+		g.drawImage(wallImg, gameInfo.wall[1][0], gameInfo.wall[1][1], null); // 추가
+		g.drawImage(wallImg, gameInfo.wall[2][0], gameInfo.wall[2][1], null); // 추가
 		
-		for(int[] bullet : info.sInfo.bulletSet) {
+		for(int[] bullet : gameInfo.bulletSet) {
 			if(bullet[2]==1) {
-				g.drawImage(p1Wave, bullet[0]-(info.BULLET_WIDTH/2), bullet[1], null);
+				g.drawImage(p1Wave, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
 			}else if(bullet[2]==2) {
-				g.drawImage(p2Wave, bullet[0]-(info.BULLET_WIDTH/2), bullet[1], null);
+				g.drawImage(p2Wave, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
 			}
 		}
 		
-	}
-	
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		if(info.cInfo.state.equals("end")) {
-			end_label.setText(info.sInfo.end_msg);
-			add(end_label);
-			add(restart);
-			info.cInfo.state = "";
-		}
-		repaint();
 	}
 	
 	class Plane1Adapter extends KeyAdapter {
@@ -123,13 +129,13 @@ public class GamePanel extends JPanel implements ActionListener{
 		public void keyPressed(KeyEvent ke) { //키 입력
 			switch (ke.getKeyCode()) {
 			case KeyEvent.VK_LEFT:	
-				info.cInfo.move = "left";
+				pInfo.move = "left";
 				break;
 			case KeyEvent.VK_RIGHT:
-				info.cInfo.move = "right";	
+				pInfo.move = "right";	
 				break;
 			case KeyEvent.VK_SPACE:
-				info.cInfo.charging = true;
+				pInfo.charging = true;
 				break;
 			}
 		}
@@ -138,13 +144,13 @@ public class GamePanel extends JPanel implements ActionListener{
 		public void keyReleased(KeyEvent ke) {
 			switch(ke.getKeyCode()) {
 			case KeyEvent.VK_LEFT:	
-				info.cInfo.move = "stop";			
+				pInfo.move = "stop";			
 				break;
 			case KeyEvent.VK_RIGHT:
-				info.cInfo.move = "stop";
+				pInfo.move = "stop";
 				break;
 			case KeyEvent.VK_SPACE:
-				info.cInfo.charging = false;
+				pInfo.charging = false;
 				break;
             }
 		}
