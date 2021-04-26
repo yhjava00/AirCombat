@@ -1,5 +1,6 @@
 package client;
 
+import java.awt.Color;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -21,15 +22,18 @@ public class AirCombatClient {
 	protected Set<String> clientRequest;
 	private Set<String> serverRequest;
 	
-	public Map<String, Object> info;
+	private Map<String, Object> info;
 	
 	protected static String code = "";
 	
-	public static GamePanel gamePanel;
+	private GameBoard gameBoard;
+	private GamePanel gamePanel;
+	
+	private WaitingBoard waitingBoard;
 	
 	public AirCombatClient() {
 		try {
-			sck = new Socket("localhost", 1234);			
+			sck = new Socket("192.168.1.32", 1234);			
 			sck.setTcpNoDelay(true);
 
 			System.out.println("Server Connect");
@@ -41,9 +45,9 @@ public class AirCombatClient {
 			
 			info = (Map)ois.readObject();
 			
-			gamePanel = new GamePanel();
+			gamePanel = new GamePanel(clientRequest);
 			
-			new WaitingBoard(clientRequest);
+			waitingBoard = new WaitingBoard(clientRequest);
 			
 			while(!info.containsKey("exit")) {
 
@@ -74,8 +78,18 @@ public class AirCombatClient {
 			case "makeRoom":
 				info.put("makeRoom", null);
 				break;
-			case "code":
-				info.put("code", code);
+			case "joinRoom":
+				info.put("joinRoom", code);
+				break;
+			case "i want p1":
+				info.put("i want p1", null);
+				break;
+			case "i want p2":
+				info.put("i want p2", null);
+				break;
+			case "gameOut":
+				gameBoard.dispose();
+				info.put("gameOut", null);
 				break;
 			case "pInfo":
 				info.put("pInfo", gamePanel.pInfo);
@@ -97,15 +111,27 @@ public class AirCombatClient {
 			switch (request) {
 			case "roomIn":
 				WaitingPanel.setCode((String) info.get("roomIn"));
-				new GameBoard(gamePanel);
+				
+				waitingBoard.startPage.setVisible(false);
+				waitingBoard.waitingPage.setVisible(true);
+
+				gamePanel.addLabelAndButton();
+				
+				gameBoard = new GameBoard(gamePanel);
 				break;
 			case "gameInfo":
 				gamePanel.gameInfo = (GameInfo) info.get("gameInfo");
+				if(gamePanel.gameInfo.chooseP1) {
+					gamePanel.p1Btn.setBackground(Color.GREEN);
+				}
+				if(gamePanel.gameInfo.chooseP2) {
+					gamePanel.p2Btn.setBackground(Color.GREEN);
+				}
 				gamePanel.repaint();
 				clientRequest.add("pInfo");
 				break;
 			case "gameStart":
-				gamePanel.pInfo.ready = false;
+				gamePanel.removeLabelAndButton();
 				break;
 			case "gameEnd":
 				gamePanel.addLabelAndButton();

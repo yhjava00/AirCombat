@@ -1,25 +1,30 @@
 package panel;
 
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import client.AirCombatClient;
-import client.GameBoard;
 import client.WaitingBoard;
 
 public class StartPanel extends JPanel {
 
-	WaitingBoard board;
+	private Image makeroom_img_path = new ImageIcon(StartPanel.class.getResource("../image/make_room.png")).getImage(); //
+	private Image joinroom_img_path = new ImageIcon(StartPanel.class.getResource("../image/join_room.png")).getImage(); //
+	private ImageIcon makeroom_img = new ImageIcon(makeroom_img_path); //
+	private ImageIcon joinroom_img = new ImageIcon(joinroom_img_path); //
+
+	private WaitingBoard board;
 	
-	JButton makeRoom = new JButton("MAKE ROOM");
-	JLabel label = new JLabel("Please enter the code");
-	JTextField code = new JTextField();
-	JButton sendCode = new JButton("SEND CODE");
+	private JButton makeRoom = new JButton(makeroom_img);
+	private JLabel label = new JLabel("Please enter the code");
+	private JTextField code = new JTextField();
+	private JButton joinRoom = new JButton(joinroom_img);
 	
 	
 	public StartPanel(WaitingBoard board) {
@@ -41,18 +46,17 @@ public class StartPanel extends JPanel {
         
         code.setBounds(125, 200, 150, 30);
         
-        sendCode.setBounds(125, 250, 150, 30);
-        sendCode.addActionListener(new ActionListener() {
+        joinRoom.setBounds(125, 250, 150, 30);
+        joinRoom.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				board.sendCode(code.getText());
-				new GameBoard(AirCombatClient.gamePanel);
+				board.joinRoom(code.getText());
 			}
 		});
         add(makeRoom);
         add(label);
         add(code);
-        add(sendCode);
+        add(joinRoom);
 	}
 	
 }

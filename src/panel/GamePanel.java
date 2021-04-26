@@ -11,11 +11,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
-import javax.swing.Timer;
 
 import info.GameInfo;
 import info.PlayerInfo;
@@ -32,7 +31,8 @@ public class GamePanel extends JPanel{
 	private final int BULLET_WIDTH = 25;
 	
 	public Label end_label = new Label();
-	private Button ready = new Button("ready");
+	public Button p1Btn = new Button("player 01");
+	public Button p2Btn = new Button("player 02");
 
 	private Image plane1 = new ImageIcon(GamePanel.class.getResource("../image/plane1.png")).getImage();
 	private Image plane2 = new ImageIcon(GamePanel.class.getResource("../image/plane2.png")).getImage();
@@ -45,6 +45,8 @@ public class GamePanel extends JPanel{
 	public GameInfo gameInfo;
 	public PlayerInfo pInfo;
 
+	protected Set<String> clientRequest;
+	
 	private void setLabelAndButton() {
 		
 		end_label.setBackground(Color.lightGray);
@@ -53,19 +55,26 @@ public class GamePanel extends JPanel{
 		end_label.setAlignment(Label.CENTER);
 		end_label.setBounds(0, 30, MAP_WIDTH, 50);
 		
-		ready.setBounds(MAP_WIDTH/2-37, 130, 75, 30);
-		ready.addActionListener(new ActionListener() {
+		p1Btn.setBounds(165, 130, 75, 30);
+		p1Btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				remove(end_label);
-				remove(ready);
-				pInfo.ready = true;
+				clientRequest.add("i want p1");
 			}
 		});
 		
+		p2Btn.setBounds(260, 130, 75, 30);
+		p2Btn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				clientRequest.add("i want p2");
+			}
+		});
 	}
 	
-	public GamePanel() {
+	public GamePanel(Set<String> clientRequest) {
+		
+		this.clientRequest = clientRequest;
 		
 		setLayout(null);
         setFocusable(true);
@@ -79,17 +88,25 @@ public class GamePanel extends JPanel{
         
         pInfo.move = "stop";
         pInfo.charging = false;
-        pInfo.ready = false;
-        
-		add(ready);
 	}
 	
 	public void addLabelAndButton() {
 		
-		end_label.setText(gameInfo.end_msg);
+		end_label.setText(gameInfo.msg);
+
+		p1Btn.setBackground(null);
+		p2Btn.setBackground(null);
 		
 		add(end_label);
-		add(ready);
+		add(p1Btn);
+		add(p2Btn);
+	}
+	
+	public void removeLabelAndButton() {
+		remove(end_label);
+		remove(p1Btn);
+		remove(p2Btn);
+		requestFocus();
 	}
 
 	@Override

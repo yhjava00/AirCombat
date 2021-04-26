@@ -1,6 +1,5 @@
 package client;
 
-import java.util.Map;
 import java.util.Set;
 
 import javax.swing.JFrame;
@@ -22,6 +21,9 @@ public class WaitingBoard extends JFrame {
 		startPage = new StartPanel(this);
 		waitingPage = new WaitingPanel(this);
 		
+		startPage.setVisible(true);
+		waitingPage.setVisible(false);
+		
 		setSize(400,400);
 		
 		setResizable(false);
@@ -38,20 +40,19 @@ public class WaitingBoard extends JFrame {
 	
 	public void makeRoom() {
 		clientRequest.add("makeRoom");
-		
-		startPage.setVisible(false);
-		waitingPage.setVisible(true);
 	}
 	
-	public void sendCode(String code) {
-		clientRequest.add("code");
+	public void joinRoom(String code) {
+		clientRequest.add("joinRoom");
 		
 		AirCombatClient.code = code;
+	}
+	
+	public void gameOut() {
+		clientRequest.add("gameOut");
 		
-		WaitingPanel.setCode(code);
-		
-		startPage.setVisible(false);
-		waitingPage.setVisible(true);
+		startPage.setVisible(true);
+		waitingPage.setVisible(false);
 	}
 	
 }

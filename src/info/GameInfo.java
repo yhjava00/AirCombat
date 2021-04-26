@@ -19,7 +19,10 @@ public class GameInfo implements Serializable {
 
 	public int[][] wall; // 추가
 	
-	public String end_msg;
+	public String msg;
+	
+	public boolean chooseP1;
+	public boolean chooseP2;
 	
 	public static GameInfo copy(GameInfo info) {
 		
@@ -44,7 +47,10 @@ public class GameInfo implements Serializable {
 		
 		newInfo.wall = info.wall;
 		
-		newInfo.end_msg = info.end_msg;
+		newInfo.msg = info.msg;
+		
+		newInfo.chooseP1 = info.chooseP1;
+		newInfo.chooseP2 = info.chooseP2;
 		
 		return newInfo;
 	}

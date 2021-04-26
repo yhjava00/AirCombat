@@ -10,6 +10,8 @@ import info.PlayerInfo;
 
 public class GameController extends Thread {
 	
+	private String code;
+	
 	private final int MAP_HEIGHT = 700;
 	private final int MAP_WIDTH = 500;
 	
@@ -19,8 +21,11 @@ public class GameController extends Thread {
 	private final int BULLET_HEIGHT = 22;
 	private final int BULLET_WIDTH = 25;
 	
-	private final int BULLET_SPEED = 1;
-	private final int CHARGING_SPEED = 5;
+	private final int WALL_SPEED = 5;
+	private final int CHARGING_SPEED = 1;
+
+	private int ChargingTick = 0;
+	private int wallTick = 0;
 	
 	public GameInfo gameInfo;
 	
@@ -30,39 +35,44 @@ public class GameController extends Thread {
 	private int[] rd_x; // 추가
 	private int[] check_y; // 추가
 	
-	protected Set<String> p1ServerRequest;
-	protected Set<String> p2ServerRequest;
+	protected boolean p1SendStart;
+	protected boolean p2SendStart;
+
+	protected boolean p1SendEnd;
+	protected boolean p2SendEnd;
 	
-	private boolean out;
+	protected int numOfPlayer;
+	
 	private boolean inGame;
 	
-	public GameController(Set<String> serverRequest) {
+	public GameController(String code) {
 		
-		this.p1ServerRequest = serverRequest;
+		this.code = code;
 		
-		out = false;
+		p1SendStart = false;
+		p2SendStart = false;
 
+		p1SendEnd = false;
+		p2SendEnd = false;
+		
+		numOfPlayer = 1;
+		
 		gameSetting();
 	}
 	
 	@Override
 	public void run() {
-
-		while(!out) {
+		
+		while(numOfPlayer>0) {
 			try {
 				Thread.sleep(1);
 			} catch (Exception e) {}
 			
-//			System.out.println(p1Info.ready + " " + p2Info.ready);
-			if(p1Info.ready&&p2Info.ready) {
-				synchronized(p1ServerRequest) {
-					p1ServerRequest.add("gameStart");
-				}
-				synchronized(p2ServerRequest) {
-					p2ServerRequest.add("gameStart");
-				}
-				
+			if(gameInfo.chooseP1&&gameInfo.chooseP2) {
 				gameSetting();
+
+				p1SendStart = true;
+				p2SendStart = true;
 				
 				inGame = true;
 			}
@@ -79,16 +89,16 @@ public class GameController extends Thread {
 				wallMove();
 				if(checkEnd()) {
 					inGame = false;
-					synchronized(p1ServerRequest) {
-						p1ServerRequest.add("gameEnd");
-					}
-					synchronized(p2ServerRequest) {
-						p2ServerRequest.add("gameEnd");
-					}
+					
+					p1SendEnd = true;
+					p2SendEnd = true;
 				}
 			}
 		}
 		
+		synchronized(AirCombatServer.gameMap) {
+			AirCombatServer.gameMap.remove(code);
+		}
 	}
 	
 	protected void gameSetting() {
@@ -97,7 +107,7 @@ public class GameController extends Thread {
 		
 		p1Info = new PlayerInfo();
 		p2Info = new PlayerInfo();
-		
+
 		p1Info.move = "stop";
 		p1Info.charging = false;
 		
@@ -119,9 +129,15 @@ public class GameController extends Thread {
 		check_y = new int[3]; // 추가	
 		gameInfo.wall = new int[3][2]; // 추가
 		
-		gameInfo.end_msg = "";
+		gameInfo.msg = "";
+		
+		gameInfo.chooseP1 = false;
+		gameInfo.chooseP2 = false;
 		
 		inGame = false;
+		
+		ChargingTick = 0;
+		wallTick = 0;
 		
 		createWall(0); // 추가
 		createWall(1); // 추가
@@ -148,11 +164,9 @@ public class GameController extends Thread {
 		}
 	}
 	
-	private int ChargingTick = 0;
-	
 	private void checkBulletCharging() {
 		
-		if(ChargingTick < 1) {
+		if(ChargingTick < CHARGING_SPEED) {
 			ChargingTick++;
 			return;
 		}
@@ -218,13 +232,11 @@ public class GameController extends Thread {
 			}
 		}
 	}
-	
-	private int wallTick = 0;
-	
+
 	// 추가
 	private void wallMove() {
 		
-		if(wallTick<5) {
+		if(wallTick<WALL_SPEED) {
 			wallTick++;
 			return;
 		}
@@ -281,16 +293,22 @@ public class GameController extends Thread {
 	}
 
 	private boolean checkEnd() {
+		
+		if(numOfPlayer<2) {
+			gameInfo.msg = "AIR COMBAT";
+			return true;
+		}	
+			
 		if(gameInfo.p1_HP<=0&&gameInfo.p2_HP<=0) {
-			gameInfo.end_msg = "DRAW!";
+			gameInfo.msg = "DRAW!";
 			return true;	
 		}
 		if(gameInfo.p1_HP<=0) {
-			gameInfo.end_msg = "PLAYER2 WIN!";
+			gameInfo.msg = "PLAYER2 WIN!";
 			return true;
 		}
 		if(gameInfo.p2_HP<=0) {
-			gameInfo.end_msg = "PLAYER1 WIN!";
+			gameInfo.msg = "PLAYER1 WIN!";
 			return true;
 		}
 		return false;

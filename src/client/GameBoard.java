@@ -23,7 +23,6 @@ public class GameBoard extends JFrame{
 	    
         setTitle("Air Combat");
         setVisible(true);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 	
 }

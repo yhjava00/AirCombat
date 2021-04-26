@@ -6,6 +6,5 @@ public class PlayerInfo implements Serializable {
 
 	public String move;
 	public boolean charging;
-	public boolean ready;
 	
 }

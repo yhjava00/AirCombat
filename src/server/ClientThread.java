@@ -37,7 +37,6 @@ public class ClientThread extends Thread {
 	private int pNum = 0;
 	
 	public ClientThread(Socket sck) {
-		
 		this.sck = sck;
 	}
 	
@@ -72,10 +71,16 @@ public class ClientThread extends Thread {
 				oos.writeObject(info);
 				oos.flush();
 				oos.reset();
+				
 			}
 			sck.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
+			
+			System.out.println("Client Disconnect");
+			
+			gameController.numOfPlayer--;
+			
 		}
 	}
 	
@@ -91,23 +96,56 @@ public class ClientThread extends Thread {
 			switch (request) {
 			case "makeRoom":
 				makeRoom();
-				pNum = 1;
 				break;
-			case "code":
-				gameController = AirCombatServer.gameMap.get(info.get("code"));
+			case "joinRoom":
+				joinRoom();
+				break;
+			case "i want p1":
+				if(pNum==0&&!gameController.gameInfo.chooseP1) {
+					pNum = 1;
+					gameController.gameInfo.chooseP1 = true;
+				}
+				break;
+			case "i want p2":
+				if(pNum==0&&!gameController.gameInfo.chooseP2) {
+					pNum = 2;
+					gameController.gameInfo.chooseP2 = true;
+				}
+				break;
+			case "gameOut":
+				code = "";
 				
-				gameController.p2ServerRequest = serverRequest;
+				gameController.numOfPlayer--;
 				
-				pNum = 2;
-				serverRequest.add("gameInfo");
-				gameController.start();
+				pNum = 0;
+				
+				gameController = null;
+				serverRequest.remove("gameInfo");
 				break;
 			case "pInfo":
 				synchronized(gameController.p1Info) {
-					if(pNum==1)
+					if(pNum==1) {
+						if(gameController.p1SendStart) {
+							serverRequest.add("gameStart");
+							gameController.p1SendStart = false;
+						}
+						if(gameController.p1SendEnd) {
+							serverRequest.add("gameEnd");
+							gameController.p1SendEnd = false;
+						}
 						gameController.p1Info = (PlayerInfo) info.get("pInfo");					
-					else if(pNum==2)
+					}
+					else {
+						if(gameController.p2SendStart) {
+							serverRequest.add("gameStart");
+							gameController.p2SendStart = false;
+						}
+						if(gameController.p2SendEnd) {
+							serverRequest.add("gameEnd");
+							gameController.p2SendEnd = false;
+						}
 						gameController.p2Info = (PlayerInfo) info.get("pInfo");					
+					}
 				}
 				serverRequest.add("gameInfo");
 				break;
@@ -131,6 +169,7 @@ public class ClientThread extends Thread {
 				info.put("gameStart", null);
 				break;
 			case "gameEnd":
+				pNum = 0;
 				info.put("gameEnd", null);
 				break;
 			}
@@ -140,21 +179,53 @@ public class ClientThread extends Thread {
 	
 	private void makeRoom() {
 		
-		gameController = new GameController(serverRequest);
+		serverRequest.add("gameInfo");
+		serverRequest.add("roomIn");
+
+		makeCode();
+		
+		gameController = new GameController(code);
+		
+		gameController.gameInfo.msg = "AIR COMBAT";
+		
+		gameController.start();
+		
+		AirCombatServer.gameMap.put(code, gameController);
+	}
+	
+	private void joinRoom() {
+
+		code = (String) info.get("joinRoom");
+		
+		if(!AirCombatServer.gameMap.containsKey(code)) 
+			return;
+		
+		gameController = AirCombatServer.gameMap.get(code);
+		
+		if(gameController.numOfPlayer>=2) {
+			return;
+		}
+		
+		gameController.numOfPlayer++;
+		
+		gameController.gameInfo.msg = "AIR COMBAT";
 		
 		serverRequest.add("gameInfo");
 		serverRequest.add("roomIn");
-		
-		makeCode();
-		AirCombatServer.gameMap.put(code, gameController);
 	}
 
 	private void makeCode() {
+		
+		code = "";
 		
 		for(int i=0; i<4; i++) {
 //			code += codeSource[(int)(Math.random()*codeSource.length)];
 			code += codeSource[(int)(Math.random()*10)];
 		}
+		
+		if(AirCombatServer.gameMap.containsKey(code))
+			makeCode();
+		
 	}
 	
 	
