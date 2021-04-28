@@ -38,6 +38,8 @@ public class GamePanel extends JPanel{
 	private Image plane2 = new ImageIcon(GamePanel.class.getResource("../image/plane2.png")).getImage();
 	private Image p1Wave = new ImageIcon(GamePanel.class.getResource("../image/p1Wave.png")).getImage();
 	private Image p2Wave = new ImageIcon(GamePanel.class.getResource("../image/p2Wave.png")).getImage();
+	private Image p1WaveLV1 = new ImageIcon(GamePanel.class.getResource("../image/p1WaveLV1.png")).getImage();
+	private Image p2WaveLV1 = new ImageIcon(GamePanel.class.getResource("../image/p2WaveLV1.png")).getImage();
 	// 추가
 	private Image wallImg = new ImageIcon(GamePanel.class.getResource("../image/wall.png")).getImage();
 	private Image backgroundImg = new ImageIcon(GamePanel.class.getResource("../image/background.png")).getImage();
@@ -118,8 +120,38 @@ public class GamePanel extends JPanel{
 		g.drawImage(plane1, gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1], null);
 		g.drawImage(plane2, gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1], null);
 		
-		g.setColor(Color.yellow);
+		switch (gameInfo.p1_gauge_lv) {
+		case 0:
+			g.setColor(Color.yellow);
+			break;
+		case 1:
+			g.setColor(Color.yellow);
+			g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+37, PLANE_WIDTH, 10);
+			g.setColor(Color.BLUE);
+			break;
+		case 2:
+			g.setColor(Color.BLUE);
+			g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+37, PLANE_WIDTH, 10);
+			g.setColor(Color.BLACK);	
+			break;
+		}
 		g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+37, gameInfo.p1_gauge, 10);
+		
+		switch (gameInfo.p2_gauge_lv) {
+		case 0:
+			g.setColor(Color.yellow);
+			break;
+		case 1:
+			g.setColor(Color.yellow);
+			g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+37, PLANE_WIDTH, 10);
+			g.setColor(Color.BLUE);
+			break;
+		case 2:
+			g.setColor(Color.BLUE);
+			g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+37, PLANE_WIDTH, 10);
+			g.setColor(Color.BLACK);	
+			break;
+		}
 		g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+37, gameInfo.p2_gauge, 10);
 
 		g.setColor(Color.RED);
@@ -131,10 +163,20 @@ public class GamePanel extends JPanel{
 		g.drawImage(wallImg, gameInfo.wall[2][0], gameInfo.wall[2][1], null); // 추가
 		
 		for(int[] bullet : gameInfo.bulletSet) {
+			
+			if(bullet[4]==0)
+				continue;
+			
 			if(bullet[2]==1) {
-				g.drawImage(p1Wave, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
+				if(bullet[3]<0)
+					g.drawImage(p1Wave, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
+				else
+					g.drawImage(p1WaveLV1, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
 			}else if(bullet[2]==2) {
-				g.drawImage(p2Wave, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
+				if(bullet[3]<0)
+					g.drawImage(p2Wave, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
+				else
+					g.drawImage(p1WaveLV1, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
 			}
 		}
 		

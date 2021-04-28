@@ -75,7 +75,7 @@ public class ClientThread extends Thread {
 			}
 			sck.close();
 		} catch (Exception e) {
-//			e.printStackTrace();
+			e.printStackTrace();
 			
 			System.out.println("Client Disconnect");
 			
@@ -188,6 +188,10 @@ public class ClientThread extends Thread {
 		
 		gameController.gameInfo.msg = "AIR COMBAT";
 		
+		//
+		gameController.gameInfo.chooseP2 = true;
+		gameController.numOfPlayer++;
+		//
 		gameController.start();
 		
 		AirCombatServer.gameMap.put(code, gameController);

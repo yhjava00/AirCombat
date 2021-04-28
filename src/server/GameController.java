@@ -3,7 +3,6 @@ package server;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
-import java.util.Set;
 
 import info.GameInfo;
 import info.PlayerInfo;
@@ -22,10 +21,16 @@ public class GameController extends Thread {
 	private final int BULLET_WIDTH = 25;
 	
 	private final int WALL_SPEED = 5;
-	private final int CHARGING_SPEED = 1;
-
+	private final int CHARGING_SPEED = 5;
+	
+	private int p1_gauge_tick = 0;
+	private int p2_gauge_tick = 0;
+	
 	private int ChargingTick = 0;
 	private int wallTick = 0;
+	
+	private int p1LV2Stack = 0;
+	private int p2LV2Stack = 0;
 	
 	public GameInfo gameInfo;
 	
@@ -44,6 +49,8 @@ public class GameController extends Thread {
 	protected int numOfPlayer;
 	
 	private boolean inGame;
+	
+	private Thread BulletLV2Thread;
 	
 	public GameController(String code) {
 		
@@ -75,6 +82,8 @@ public class GameController extends Thread {
 				p2SendStart = true;
 				
 				inGame = true;
+				
+				BulletLV2Thread.start();
 			}
 			
 			while(inGame) {
@@ -114,13 +123,16 @@ public class GameController extends Thread {
 		p2Info.move = "stop";
 		p2Info.charging = false;
 		
-		gameInfo.bulletSet = new HashSet<int[]>();
+		gameInfo.bulletSet = new int[100][5];
 		
 		gameInfo.p1 = new int[] {250, MAP_HEIGHT-PLANE_HEIGHT-20};
 		gameInfo.p2 = new int[] {250, 0};
 		
 		gameInfo.p1_gauge = 0;
 		gameInfo.p2_gauge = 0;
+		
+		gameInfo.p1_gauge_lv = 0;
+		gameInfo.p2_gauge_lv = 0;
 		
 		gameInfo.p1_HP = 50;
 		gameInfo.p2_HP = 50;
@@ -142,6 +154,8 @@ public class GameController extends Thread {
 		createWall(0); // 추가
 		createWall(1); // 추가
 		createWall(2); // 추가
+		
+		BulletLV2Thread = new BulletLV2Thread();
 		
 	}
 	
@@ -173,60 +187,91 @@ public class GameController extends Thread {
 		
 		ChargingTick = 0;
 		
-		if(p1Info.charging&&(gameInfo.p1_gauge<PLANE_WIDTH)) {
-			gameInfo.p1_gauge++;
+		if(p1Info.charging) {
+			if(gameInfo.p1_gauge<PLANE_WIDTH) {
+				gameInfo.p1_gauge++;				
+			}else if(gameInfo.p1_gauge_lv<2) {
+				if(p1_gauge_tick<50) {
+					p1_gauge_tick++;
+				}else {
+					p1_gauge_tick = 0;
+					gameInfo.p1_gauge = 0;
+					gameInfo.p1_gauge_lv++;					
+				}
+			}
 		}
-		if(p2Info.charging&&(gameInfo.p2_gauge<PLANE_WIDTH)) {
-			gameInfo.p2_gauge++;
+		if(p2Info.charging) {
+			if(gameInfo.p2_gauge<PLANE_WIDTH) {
+				gameInfo.p2_gauge++;				
+			}else if(gameInfo.p2_gauge_lv<2) {
+				if(p2_gauge_tick<50) {
+					p2_gauge_tick++;
+				}else {
+					p2_gauge_tick = 0;
+					gameInfo.p2_gauge = 0;
+					gameInfo.p2_gauge_lv++;					
+				}
+			}
 		}
 	}
 	
 	private void checkBulletCreate() {
 
 		if(!p1Info.charging) {
+			
 			if(gameInfo.p1_gauge==PLANE_WIDTH)
-				createBullet(0);
+				createBullet(1, gameInfo.p1_gauge_lv);
+			else if(gameInfo.p1_gauge!=0)
+				createBullet(1, gameInfo.p1_gauge_lv-1);
+			
 			gameInfo.p1_gauge = 0;
+			gameInfo.p1_gauge_lv = 0;
 		}
 		if(!p2Info.charging) {
+
 			if(gameInfo.p2_gauge==PLANE_WIDTH)
-				createBullet(1);
+				createBullet(2, gameInfo.p2_gauge_lv);
+			else if(gameInfo.p2_gauge!=0)
+				createBullet(2, gameInfo.p2_gauge_lv-1);
+			
 			gameInfo.p2_gauge = 0;
+			gameInfo.p2_gauge_lv = 0;
 		}
 	}
 	
 	private void bulletMoveAndCheckHit() {
 		
-		Iterator<int[]> iter = gameInfo.bulletSet.iterator();
-		
-		while(iter.hasNext()) {
-			int[] bullet = iter.next();
+		for(int i=0; i<gameInfo.bulletSet.length; i++) {
+			int[] bullet = gameInfo.bulletSet[i];
 			
+			if(bullet[4]==0)
+				continue;
+
 			if(bullet[2]==1) {
 				bullet[1]--;
 			}else if(bullet[2]==2) {
 				bullet[1]++;
 			}
-			
-			if(bullet[1]<0||bullet[1]>MAP_HEIGHT-BULLET_HEIGHT) {
-				iter.remove();
+
+			if(bullet[0]<0||bullet[0]>MAP_HEIGHT-BULLET_HEIGHT) {
+				bullet[4] = 0;
 			}
-			
+
 			if(bullet[1]<(PLANE_HEIGHT)&&(bullet[0]>=gameInfo.p2[0]-(PLANE_WIDTH/2)&&bullet[0]<=gameInfo.p2[0]+(PLANE_WIDTH/2))) {
-				iter.remove();
+				bullet[4] = 0;
 				gameInfo.p2_HP -= 10;
 			}
 			if(bullet[1]>(MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20)&&(bullet[0]>=gameInfo.p1[0]-25&&bullet[0]<=gameInfo.p1[0]+25)) {
-				iter.remove();
+				bullet[4] = 0;
 				gameInfo.p1_HP -= 10;
 			}
-			
+
 			// 추가
-			for(int i=0; i<3; i++) {
-				if ((bullet[0] >= gameInfo.wall[i][0]) && (bullet[0] <= (gameInfo.wall[i][0] + 120))) { // 총알이 벽1에 막혔을때 총알 삭제
-					if (bullet[1] == gameInfo.wall[i][1] + 12)// 아래쪽 플레이어 총알이 벽에 막혔을때 총알 삭제
+			for(int j=0; j<3; j++) {
+				if ((bullet[0] >= gameInfo.wall[j][0]) && (bullet[0] <= (gameInfo.wall[j][0] + 120))&&bullet[3]<0) { // 총알이 벽1에 막혔을때 총알 삭제
+					if (bullet[1] == gameInfo.wall[j][1] + 12)// 아래쪽 플레이어 총알이 벽에 막혔을때 총알 삭제
 						bullet[2]=2;
-					if (bullet[1] == gameInfo.wall[i][1] - 15)// 위쪽 플레이어 총알이 벽에 막혔을때 총알 삭제
+					if (bullet[1] == gameInfo.wall[j][1] - 15)// 위쪽 플레이어 총알이 벽에 막혔을때 총알 삭제
 						bullet[2]=1;
 				}						
 			}
@@ -258,14 +303,30 @@ public class GameController extends Thread {
 		}
 	}
 		
-	private void createBullet(int direction) {
-		if(direction==0) {
-			gameInfo.bulletSet.add(new int[] {gameInfo.p1[0], MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20, 1});			
+	private void createBullet(int direction, int lv) {
+		
+		if(direction==1) {
+			if(lv==2)
+				p1LV2Stack = 5;
+			else
+				addBulletSet(new int[] {gameInfo.p1[0], MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20, 1, lv, 1});
 		}else {
-			gameInfo.bulletSet.add(new int[] {gameInfo.p2[0], PLANE_HEIGHT, 2});
+			if(lv==2)
+				p2LV2Stack = 5;
+			else
+				addBulletSet(new int[] {gameInfo.p2[0], PLANE_HEIGHT, 2, lv, 1});
 		}
 	}
-		
+	
+	private void addBulletSet(int[] bullet) {
+		for(int i=0; i<gameInfo.bulletSet.length; i++) {
+			if(gameInfo.bulletSet[i][4]==0) {
+				gameInfo.bulletSet[i] = bullet;
+				break;
+			}
+		}
+	}
+	
 	// 추가
 	private void createWall(int w1) {//
 		
@@ -313,4 +374,33 @@ public class GameController extends Thread {
 		}
 		return false;
 	}
+	
+	class BulletLV2Thread extends Thread {
+		
+		@Override
+		public void run() {
+			
+			while(inGame) {
+				try {
+					Thread.sleep(100);
+				} catch (Exception e) {}
+				if(p1LV2Stack>0) {
+					p1LV2Stack--;
+					synchronized(gameInfo.bulletSet) {
+						addBulletSet(new int[] {gameInfo.p1[0]+PLANE_WIDTH/2, MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20, 1, 2, 1});
+						addBulletSet(new int[] {gameInfo.p1[0]-PLANE_WIDTH/2, MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20, 1, 2, 1});						
+					}
+				}
+				if(p2LV2Stack>0) {
+					p2LV2Stack--;
+					synchronized(gameInfo.bulletSet) {
+						addBulletSet(new int[] {gameInfo.p2[0]+PLANE_WIDTH/2, PLANE_HEIGHT, 2, 2, 1});
+						addBulletSet(new int[] {gameInfo.p2[0]-PLANE_WIDTH/2, PLANE_HEIGHT, 2, 2, 1});
+					}
+				}
+			}
+			
+		}
+	}
+	
 }
