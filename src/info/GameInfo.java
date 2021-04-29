@@ -26,7 +26,9 @@ public class GameInfo implements Serializable {
 	
 	public boolean chooseP1;
 	public boolean chooseP2;
-	
+
+	public int boom[][]; // 추가
+
 	public static GameInfo copy(GameInfo info) {
 		
 		GameInfo newInfo = new GameInfo();
@@ -56,6 +58,8 @@ public class GameInfo implements Serializable {
 		newInfo.chooseP1 = info.chooseP1;
 		newInfo.chooseP2 = info.chooseP2;
 		
+		newInfo.boom = info.boom;
+
 		return newInfo;
 	}
 	

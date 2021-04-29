@@ -123,32 +123,12 @@ public class ClientThread extends Thread {
 				serverRequest.remove("gameInfo");
 				break;
 			case "pInfo":
-				synchronized(gameController.p1Info) {
-					if(pNum==1) {
-						if(gameController.p1SendStart) {
-							serverRequest.add("gameStart");
-							gameController.p1SendStart = false;
-						}
-						if(gameController.p1SendEnd) {
-							serverRequest.add("gameEnd");
-							gameController.p1SendEnd = false;
-						}
-						gameController.p1Info = (PlayerInfo) info.get("pInfo");					
-					}
-					else {
-						if(gameController.p2SendStart) {
-							serverRequest.add("gameStart");
-							gameController.p2SendStart = false;
-						}
-						if(gameController.p2SendEnd) {
-							serverRequest.add("gameEnd");
-							gameController.p2SendEnd = false;
-						}
-						gameController.p2Info = (PlayerInfo) info.get("pInfo");					
-					}
-				}
-				serverRequest.add("gameInfo");
+				connectPInfoAndCheckGameState();
 				break;
+				// 추가
+			case "select":
+				setWallLV();
+			break;
 			}
 		}
 	}
@@ -161,9 +141,11 @@ public class ClientThread extends Thread {
 				info.put("roomIn", code);
 				break;
 			case "gameInfo":
-				synchronized(gameController.gameInfo) {
-					info.put("gameInfo", GameInfo.copy(gameController.gameInfo));
-				}
+				info.put("gameInfo", GameInfo.copy(gameController.gameInfo));
+//				System.out.println(gameController.gameInfo.boom);
+				break;
+			case "selectLV":
+				info.put("selectLV", null);
 				break;
 			case "gameStart":
 				info.put("gameStart", null);
@@ -188,10 +170,6 @@ public class ClientThread extends Thread {
 		
 		gameController.gameInfo.msg = "AIR COMBAT";
 		
-		//
-		gameController.gameInfo.chooseP2 = true;
-		gameController.numOfPlayer++;
-		//
 		gameController.start();
 		
 		AirCombatServer.gameMap.put(code, gameController);
@@ -201,7 +179,7 @@ public class ClientThread extends Thread {
 
 		code = (String) info.get("joinRoom");
 		
-		if(!AirCombatServer.gameMap.containsKey(code)) 
+		if(!AirCombatServer.gameMap.containsKey(code)||code.equals("")) 
 			return;
 		
 		gameController = AirCombatServer.gameMap.get(code);
@@ -222,15 +200,63 @@ public class ClientThread extends Thread {
 		
 		code = "";
 		
-		for(int i=0; i<4; i++) {
+		while(AirCombatServer.gameMap.containsKey(code)) {
+			for(int i=0; i<4; i++) {
 //			code += codeSource[(int)(Math.random()*codeSource.length)];
-			code += codeSource[(int)(Math.random()*10)];
+				code += codeSource[(int)(Math.random()*10)];
+			}
 		}
-		
-		if(AirCombatServer.gameMap.containsKey(code))
-			makeCode();
-		
 	}
 	
+	private void connectPInfoAndCheckGameState() {
+		if(pNum==1) {
+			if(gameController.p1SendSelectLV) {
+				serverRequest.add("selectLV");
+				gameController.p1SendSelectLV = false;
+			}else if(gameController.p1SendStart) {
+				serverRequest.add("gameStart");
+				gameController.p1SendStart = false;
+			}else if(gameController.p1SendEnd) {
+				serverRequest.add("gameEnd");
+				gameController.p1SendEnd = false;
+			}
+			gameController.p1Info = (PlayerInfo) info.get("pInfo");					
+		}
+		else {
+			if(gameController.p2SendSelectLV) {
+				serverRequest.add("selectLV");
+				gameController.p2SendSelectLV = false;
+			}else if(gameController.p2SendStart) {
+				serverRequest.add("gameStart");
+				gameController.p2SendStart = false;
+			}else if(gameController.p2SendEnd) {
+				serverRequest.add("gameEnd");
+				gameController.p2SendEnd = false;
+			}
+			gameController.p2Info = (PlayerInfo) info.get("pInfo");
+		}
+		serverRequest.add("gameInfo");
+	}
+	
+	private void setWallLV() {
+		if(pNum==2)
+			return;
+		
+		switch ((int)info.get("select")) {
+		case 1:
+			gameController.wall_speed = 5;
+			break;
+		case 2:
+			gameController.wall_speed = 0;
+			break;
+		case 3:
+			gameController.wall_speed = 0;
+			gameController.moreWall();
+			break;
+		}
+		
+		gameController.selectLV = true;
+		serverRequest.add("selectLevel");
+	}
 	
 }

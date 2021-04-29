@@ -17,6 +17,8 @@ public class AirCombatServer {
 			
 //			new TestThread().start();
 			
+			gameMap.put("", null);
+			
 			server = new ServerSocket(1234);
 			
 			while(true) {

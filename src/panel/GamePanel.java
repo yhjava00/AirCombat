@@ -30,9 +30,13 @@ public class GamePanel extends JPanel{
 	private final int BULLET_HEIGHT = 22;
 	private final int BULLET_WIDTH = 25;
 	
-	public Label end_label = new Label();
+	public Label guide_label = new Label();
 	public Button p1Btn = new Button("player 01");
 	public Button p2Btn = new Button("player 02");
+	
+	public Button lv1Btn = new Button("Level 1");//
+	public Button lv2Btn = new Button("Level 2");//
+	public Button lv3Btn = new Button("Level 3");//
 
 	private Image plane1 = new ImageIcon(GamePanel.class.getResource("../image/plane1.png")).getImage();
 	private Image plane2 = new ImageIcon(GamePanel.class.getResource("../image/plane2.png")).getImage();
@@ -41,21 +45,30 @@ public class GamePanel extends JPanel{
 	private Image p1WaveLV1 = new ImageIcon(GamePanel.class.getResource("../image/p1WaveLV1.png")).getImage();
 	private Image p2WaveLV1 = new ImageIcon(GamePanel.class.getResource("../image/p2WaveLV1.png")).getImage();
 	// 추가
+	private Image boomImg = new ImageIcon(GamePanel.class.getResource("../image/boom.png")).getImage();
 	private Image wallImg = new ImageIcon(GamePanel.class.getResource("../image/wall.png")).getImage();
 	private Image backgroundImg = new ImageIcon(GamePanel.class.getResource("../image/background.png")).getImage();
+	
+	private boolean checkRepaint;
+	private boolean backgroundMove;
+	
+	private int backgroundLocate = 0;
 	
 	public GameInfo gameInfo;
 	public PlayerInfo pInfo;
 
 	protected Set<String> clientRequest;
 	
+	private Thread backgroundMoveThread;
+	private Thread repaintThread;
+	
 	private void setLabelAndButton() {
 		
-		end_label.setBackground(Color.lightGray);
-		end_label.setFont(new Font("Serif", Font.BOLD, 21));
-		end_label.setForeground(Color.black);
-		end_label.setAlignment(Label.CENTER);
-		end_label.setBounds(0, 30, MAP_WIDTH, 50);
+		guide_label.setBackground(Color.lightGray);
+		guide_label.setFont(new Font("Serif", Font.BOLD, 21));
+		guide_label.setForeground(Color.black);
+		guide_label.setAlignment(Label.CENTER);
+		guide_label.setBounds(0, 30, MAP_WIDTH, 50);
 		
 		p1Btn.setBounds(165, 130, 75, 30);
 		p1Btn.addActionListener(new ActionListener() {
@@ -70,6 +83,29 @@ public class GamePanel extends JPanel{
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				clientRequest.add("i want p2");
+			}
+		});
+		
+		// 추가
+		lv1Btn.setBounds(115, 130, 75, 30);
+		lv1Btn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				clientRequest.add("select lv1");
+			}
+		});
+		lv2Btn.setBounds(215, 130, 75, 30);
+		lv2Btn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				clientRequest.add("select lv2");
+			}
+		});
+		lv3Btn.setBounds(315, 130, 75, 30);
+		lv3Btn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				clientRequest.add("select lv3");
 			}
 		});
 	}
@@ -94,28 +130,60 @@ public class GamePanel extends JPanel{
 	
 	public void addLabelAndButton() {
 		
-		end_label.setText(gameInfo.msg);
+		guide_label.setText(gameInfo.msg);
 
 		p1Btn.setBackground(null);
 		p2Btn.setBackground(null);
 		
-		add(end_label);
+		add(guide_label);
 		add(p1Btn);
 		add(p2Btn);
 	}
 	
 	public void removeLabelAndButton() {
-		remove(end_label);
 		remove(p1Btn);
 		remove(p2Btn);
+	}
+
+	// 추가
+	public void addSelectLevelButton() {
+		guide_label.setText("PLEASE SELECT LEVEL");
+		add(guide_label);
+		add(lv1Btn);
+		add(lv2Btn);
+		add(lv3Btn);
+		
+	}
+	public void removeSelectLevelButton() {
+		remove(guide_label);
+		remove(lv1Btn);
+		remove(lv2Btn);
+		remove(lv3Btn);
 		requestFocus();
+	}
+	
+	public void gameStart() {
+		
+		checkRepaint = true;
+		repaintThread = new RepaintThread();
+		repaintThread.start();
+		
+		backgroundMove = true;
+		backgroundMoveThread = new BackGroundMoveThread();
+		backgroundMoveThread.start();
+	}
+	
+	public void gameStop() {
+		checkRepaint = false;
+		backgroundMove = false;
 	}
 
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		
-		g.drawImage(backgroundImg , 0 , 0 , null); // 추가
+		g.drawImage(backgroundImg , 0 , backgroundLocate , null); // 추가
+		g.drawImage(backgroundImg , 0 , backgroundLocate-MAP_HEIGHT , null); // 추가
 		
 		g.drawImage(plane1, gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1], null);
 		g.drawImage(plane2, gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1], null);
@@ -157,10 +225,10 @@ public class GamePanel extends JPanel{
 		g.setColor(Color.RED);
 		g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+47 , gameInfo.p1_HP , 10);
 		g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+47 , gameInfo.p2_HP , 10);
-
-		g.drawImage(wallImg, gameInfo.wall[0][0], gameInfo.wall[0][1], null); // 추가
-		g.drawImage(wallImg, gameInfo.wall[1][0], gameInfo.wall[1][1], null); // 추가
-		g.drawImage(wallImg, gameInfo.wall[2][0], gameInfo.wall[2][1], null); // 추가
+		
+		for(int i=0; i<gameInfo.wall.length; i++) {
+			g.drawImage(wallImg, gameInfo.wall[i][0], gameInfo.wall[i][1], null); // 추가			
+		}
 		
 		for(int[] bullet : gameInfo.bulletSet) {
 			
@@ -176,7 +244,13 @@ public class GamePanel extends JPanel{
 				if(bullet[3]<0)
 					g.drawImage(p2Wave, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
 				else
-					g.drawImage(p1WaveLV1, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
+					g.drawImage(p2WaveLV1, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
+			}
+		}
+		
+		for(int[] boom : gameInfo.boom) {
+			if(boom[2]>0) {
+				g.drawImage(boomImg, boom[0]-26, boom[1] , null);
 			}
 		}
 		
@@ -185,7 +259,7 @@ public class GamePanel extends JPanel{
 	class Plane1Adapter extends KeyAdapter {
 		
 		@Override
-		public void keyPressed(KeyEvent ke) { //키 입력
+		public void keyPressed(KeyEvent ke) {
 			switch (ke.getKeyCode()) {
 			case KeyEvent.VK_LEFT:	
 				pInfo.move = "left";
@@ -214,4 +288,35 @@ public class GamePanel extends JPanel{
             }
 		}
 	}
+	
+	class RepaintThread extends Thread {
+		@Override
+		public void run() {
+			while(checkRepaint) {
+				try {
+					Thread.sleep(1);
+				} catch (Exception e) {}
+				
+				repaint();
+				
+			}
+		}
+	}
+	
+	class BackGroundMoveThread extends Thread {
+		@Override
+		public void run() {
+			while(backgroundMove) {
+				try {
+					Thread.sleep(2);
+				} catch (Exception e) {}
+
+				backgroundLocate++;
+				
+				if(backgroundLocate>=MAP_HEIGHT)
+					backgroundLocate = 0;	
+			}
+		}
+	}
+	
 }
