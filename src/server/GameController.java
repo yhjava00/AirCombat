@@ -16,6 +16,9 @@ public class GameController extends Thread {
 	private final int BULLET_HEIGHT = 22;
 	private final int BULLET_WIDTH = 25;
 	
+	private final int ITEM_HEIGHT = 30;
+	private final int ITEM_WIDTH = 30;
+	
 	private final int CHARGING_SPEED = 5;
 	
 	private int p1_gauge_tick = 0;
@@ -23,6 +26,7 @@ public class GameController extends Thread {
 	
 	private int ChargingTick = 0;
 	private int wallTick = 0;
+	private int itemTick = 0; // 추가
 	
 	private int p1LV2Stack = 0;
 	private int p2LV2Stack = 0;
@@ -42,6 +46,8 @@ public class GameController extends Thread {
 	protected boolean p2SendEnd;
 	
 	protected boolean selectLV;
+	
+	protected boolean opponentOut;
 	
 	protected int numOfPlayer;
 	
@@ -66,6 +72,8 @@ public class GameController extends Thread {
 		
 		selectLV = false;
 		
+		opponentOut = false;
+		
 		numOfPlayer = 1;
 		
 		gameSetting();
@@ -81,7 +89,6 @@ public class GameController extends Thread {
 			
 			if(gameInfo.chooseP1&&gameInfo.chooseP2) {
 				gameSetting();
-
 				p1SendSelectLV = true;
 				p2SendSelectLV = true;
 				
@@ -103,6 +110,7 @@ public class GameController extends Thread {
 				} catch (Exception e) {}
 				
 				playerMove();
+				itemAdministrate();
 				checkBulletCharging();
 				checkBulletCreate();
 				bulletMoveAndCheckHit();
@@ -110,7 +118,7 @@ public class GameController extends Thread {
 				collectBoom();
 				if(checkEnd()) {
 					inGame = false;
-					
+
 					p1SendEnd = true;
 					p2SendEnd = true;
 				}
@@ -149,7 +157,9 @@ public class GameController extends Thread {
 		gameInfo.p1_HP = 50;
 		gameInfo.p2_HP = 50;
 	
-		gameInfo.wall = new int[3][3]; // 추가
+		gameInfo.wall = new int[5][4]; // 추가
+		
+		gameInfo.item = new int[4];
 		
 		gameInfo.msg = "";
 		
@@ -163,12 +173,11 @@ public class GameController extends Thread {
 		ChargingTick = 0;
 		wallTick = 0;
 		
-		createWall(0); // 추가
-		createWall(1); // 추가
-		createWall(2); // 추가
+		for(int i=0; i<gameInfo.wall.length; i++) {
+			createWall(i);
+		}
 		
 		BulletLV2Thread = new BulletLV2Thread();
-		
 	}
 	
 	private void playerMove() {
@@ -188,6 +197,86 @@ public class GameController extends Thread {
 				MAP_WIDTH + (PLANE_WIDTH/2) > gameInfo.p1[0] + PLANE_WIDTH) {
 			gameInfo.p1[0]++;
 		}
+	}
+	
+	// 추가
+	private void itemAdministrate() {
+		
+		if(gameInfo.item[3]!=0) {
+			itemMove();
+			return;
+		}
+		
+		if((int)(Math.random()*5000) == 0) {
+			gameInfo.item[0] = (int)((Math.random()*100)+200);
+			gameInfo.item[1] = (int)((Math.random()*100)+200);
+			gameInfo.item[2] = (int)((Math.random()*4)+1);
+			gameInfo.item[3] = 1;
+		}
+	}
+	
+	// 추가
+	private void itemMove() {
+		if(itemTick < 4) {
+			itemTick++;
+			return;
+		}
+		itemTick = 0;
+		
+		switch(gameInfo.item[2]) {
+		case 1:
+			gameInfo.item[0] --;
+			gameInfo.item[1] --;
+			if(gameInfo.item[0] == 0) {
+				gameInfo.item[2] = 2;
+			}else if(gameInfo.item[1] == 0) {
+				gameInfo.item[2] = 4;
+			}
+			break;
+		case 2:
+			gameInfo.item[0] ++;
+			gameInfo.item[1] --;
+			if(gameInfo.item[1] == 0) {
+				gameInfo.item[2] = 3;
+			}else if(gameInfo.item[0] == MAP_WIDTH-ITEM_WIDTH) {
+				gameInfo.item[2] = 1;
+			}
+			break;
+		case 3:
+			gameInfo.item[0] ++;
+			gameInfo.item[1] ++;
+			if(gameInfo.item[0] == MAP_WIDTH-ITEM_WIDTH) {
+				gameInfo.item[2] = 4;
+			}else if(gameInfo.item[1] == MAP_HEIGHT-ITEM_HEIGHT) {
+				gameInfo.item[2] = 2;
+			}
+			break;
+		case 4:
+			gameInfo.item[0] --;
+			gameInfo.item[1] ++;
+			if(gameInfo.item[1] == MAP_HEIGHT-ITEM_HEIGHT) {
+				gameInfo.item[2] = 1;
+			}else if(gameInfo.item[0] == 0) {
+				gameInfo.item[2] = 3;
+			}
+			break;
+		}
+		
+		if((gameInfo.item[0]+30 >= gameInfo.p1[0]-25 && gameInfo.item[0] <= gameInfo.p1[0]+25) 
+			&& (gameInfo.item[1] + 30 >= gameInfo.p1[1] && gameInfo.item[1] <= gameInfo.p1[1]+37)) {
+			gameInfo.item[3] = 0;
+			if(gameInfo.p1_HP != 50) {
+				gameInfo.p1_HP += 10;
+			}
+		}
+		
+		if((gameInfo.item[0]+30 >= gameInfo.p2[0]-25 && gameInfo.item[0] <= gameInfo.p2[0]+25) 
+				&& (gameInfo.item[1] >= gameInfo.p2[1] && gameInfo.item[1] <= gameInfo.p2[1]+37)) {
+			gameInfo.item[3] = 0;
+				if(gameInfo.p2_HP != 50) {
+					gameInfo.p2_HP += 10;
+				}
+			}	
 	}
 	
 	private void checkBulletCharging() {
@@ -271,17 +360,17 @@ public class GameController extends Thread {
 
 			if(bullet[1]<(PLANE_HEIGHT)&&(bullet[0]>=gameInfo.p2[0]-(PLANE_WIDTH/2)&&bullet[0]<=gameInfo.p2[0]+(PLANE_WIDTH/2))) {
 				bullet[4] = 0;
-				createBoom(bullet);
+				createBoom(bullet, 2);
 				gameInfo.p2_HP -= 10;
 			}
-			if(bullet[1]>(MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20)&&(bullet[0]>=gameInfo.p1[0]-25&&bullet[0]<=gameInfo.p1[0]+25)) {
+			if(bullet[1]>(MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20)&&(bullet[0]>=gameInfo.p1[0]-(PLANE_WIDTH/2)&&bullet[0]<=gameInfo.p1[0]+(PLANE_WIDTH/2))) {
 				bullet[4] = 0;
-				createBoom(bullet);
+				createBoom(bullet, 1);
 				gameInfo.p1_HP -= 10;
 			}
 
 			// 추가
-			for(int j=0; j<3; j++) {
+			for(int j=0; j<gameInfo.wall.length; j++) {
 				if ((bullet[0] >= gameInfo.wall[j][0]) && (bullet[0] <= (gameInfo.wall[j][0] + 120))&&bullet[3]<0) { // 총알이 벽1에 막혔을때 총알 삭제
 					if (bullet[1] == gameInfo.wall[j][1] + 12)// 아래쪽 플레이어 총알이 벽에 막혔을때 총알 삭제
 						bullet[2]=2;
@@ -304,13 +393,13 @@ public class GameController extends Thread {
 		
 		for(int i=0; i<gameInfo.wall.length; i++) {
 			if (gameInfo.wall[i][2] == 0) {
-				gameInfo.wall[i][0]++;
-				if (gameInfo.wall[i][0] == MAP_WIDTH) {
+				gameInfo.wall[i][0] += gameInfo.wall[i][3];
+				if (gameInfo.wall[i][0] > MAP_WIDTH) {
 					createWall(i);
 				}
 			}else {
-				gameInfo.wall[i][0]--;
-				if (gameInfo.wall[i][0] == -140) {
+				gameInfo.wall[i][0] -= gameInfo.wall[i][3];
+				if (gameInfo.wall[i][0] < -140) {
 					createWall(i);
 				}
 			}
@@ -329,12 +418,12 @@ public class GameController extends Thread {
 		
 		if(direction==1) {
 			if(lv==2)
-				p1LV2Stack = 5;
+				p1LV2Stack = 6;
 			else
 				addBulletSet(new int[] {gameInfo.p1[0], MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20, 1, lv, 1});
 		}else {
 			if(lv==2)
-				p2LV2Stack = 5;
+				p2LV2Stack = 6;
 			else
 				addBulletSet(new int[] {gameInfo.p2[0], PLANE_HEIGHT, 2, lv, 1});
 		}
@@ -374,13 +463,18 @@ public class GameController extends Thread {
 			if(i==gameInfo.wall.length)
 				break;
 		}
+		
+		gameInfo.wall[w1][3] = (int)(Math.random()*5)+1;
 	}
 	
-	private void createBoom(int[] bullet) {
+	private void createBoom(int[] bullet, int p) {
+		
+		int n = p==1?10:-10;
+		
 		for(int i=0; i<gameInfo.boom.length; i++) {
 			if(gameInfo.boom[i][2]<=0) {
 				gameInfo.boom[i][0] = bullet[0];
-				gameInfo.boom[i][1] = bullet[1];
+				gameInfo.boom[i][1] = bullet[1] + n;
 				gameInfo.boom[i][2] = 100;
 				break;
 			}
@@ -388,7 +482,7 @@ public class GameController extends Thread {
 	}
 	
 	protected void moreWall() {
-		gameInfo.wall = new int[5][3];
+		gameInfo.wall = new int[9][4];
 		
 		for(int i=0; i<gameInfo.wall.length; i++) {
 			createWall(i);

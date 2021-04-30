@@ -45,6 +45,7 @@ public class GamePanel extends JPanel{
 	private Image p1WaveLV1 = new ImageIcon(GamePanel.class.getResource("../image/p1WaveLV1.png")).getImage();
 	private Image p2WaveLV1 = new ImageIcon(GamePanel.class.getResource("../image/p2WaveLV1.png")).getImage();
 	// 추가
+	private Image itemImg = new ImageIcon(GamePanel.class.getResource("../image/item.png")).getImage();
 	private Image boomImg = new ImageIcon(GamePanel.class.getResource("../image/boom.png")).getImage();
 	private Image wallImg = new ImageIcon(GamePanel.class.getResource("../image/wall.png")).getImage();
 	private Image backgroundImg = new ImageIcon(GamePanel.class.getResource("../image/background.png")).getImage();
@@ -68,9 +69,9 @@ public class GamePanel extends JPanel{
 		guide_label.setFont(new Font("Serif", Font.BOLD, 21));
 		guide_label.setForeground(Color.black);
 		guide_label.setAlignment(Label.CENTER);
-		guide_label.setBounds(0, 30, MAP_WIDTH, 50);
+		guide_label.setBounds(0, 70, MAP_WIDTH, 50);
 		
-		p1Btn.setBounds(165, 130, 75, 30);
+		p1Btn.setBounds(165, 150, 75, 30);
 		p1Btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -78,7 +79,7 @@ public class GamePanel extends JPanel{
 			}
 		});
 		
-		p2Btn.setBounds(260, 130, 75, 30);
+		p2Btn.setBounds(260, 150, 75, 30);
 		p2Btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -87,21 +88,21 @@ public class GamePanel extends JPanel{
 		});
 		
 		// 추가
-		lv1Btn.setBounds(115, 130, 75, 30);
+		lv1Btn.setBounds(115, 150, 75, 30);
 		lv1Btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				clientRequest.add("select lv1");
 			}
 		});
-		lv2Btn.setBounds(215, 130, 75, 30);
+		lv2Btn.setBounds(215, 150, 75, 30);
 		lv2Btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				clientRequest.add("select lv2");
 			}
 		});
-		lv3Btn.setBounds(315, 130, 75, 30);
+		lv3Btn.setBounds(315, 150, 75, 30);
 		lv3Btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -250,9 +251,12 @@ public class GamePanel extends JPanel{
 		
 		for(int[] boom : gameInfo.boom) {
 			if(boom[2]>0) {
-				g.drawImage(boomImg, boom[0]-26, boom[1] , null);
+				g.drawImage(boomImg, boom[0]-20, boom[1] , null);
 			}
 		}
+
+		if(gameInfo.item[3] != 0) 
+			g.drawImage(itemImg, gameInfo.item[0] , gameInfo.item[1] , null); 
 		
 	}
 	
@@ -308,7 +312,7 @@ public class GamePanel extends JPanel{
 		public void run() {
 			while(backgroundMove) {
 				try {
-					Thread.sleep(2);
+					Thread.sleep(7);
 				} catch (Exception e) {}
 
 				backgroundLocate++;

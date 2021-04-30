@@ -90,6 +90,8 @@ public class AirCombatClient {
 			case "gameOut":
 				gameBoard.dispose();
 				gamePanel.gameStop();
+				gamePanel.removeLabelAndButton();
+				gamePanel.removeSelectLevelButton();
 				info.put("gameOut", null);
 				break;
 			case "pInfo":
@@ -134,13 +136,18 @@ public class AirCombatClient {
 				break;
 			case "gameInfo":
 				gamePanel.gameInfo = (GameInfo) info.get("gameInfo");
+				
 				if(gamePanel.gameInfo.chooseP1) {
 					gamePanel.p1Btn.setBackground(Color.GREEN);
+				}else {
+					gamePanel.p1Btn.setBackground(null);
 				}
 				if(gamePanel.gameInfo.chooseP2) {
 					gamePanel.p2Btn.setBackground(Color.GREEN);
+				}else {
+					gamePanel.p2Btn.setBackground(null);
 				}
-//				System.out.println(gamePanel.gameInfo.boom);
+				
 				clientRequest.add("pInfo");
 				break;
 			case "selectLV":
@@ -151,6 +158,7 @@ public class AirCombatClient {
 				gamePanel.removeSelectLevelButton(); // 추가
 				break;
 			case "gameEnd":
+				gamePanel.removeSelectLevelButton();
 				gamePanel.addLabelAndButton();
 				break;
 			}

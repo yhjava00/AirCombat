@@ -5,7 +5,6 @@ import java.awt.Toolkit;
 
 import javax.swing.JFrame;
 
-import info.GameInfo;
 import panel.GamePanel;
 
 public class GameBoard extends JFrame{

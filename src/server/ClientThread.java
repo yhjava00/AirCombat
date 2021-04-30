@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import info.GameInfo;
 import info.PlayerInfo;
 
 public class ClientThread extends Thread {
@@ -57,6 +56,8 @@ public class ClientThread extends Thread {
 			while(!info.containsKey("exit")) {
 
 				Thread.sleep(1);
+
+//				System.out.println(pNum);
 				
 				info = (Map) ois.readObject();
 				
@@ -101,23 +102,31 @@ public class ClientThread extends Thread {
 				joinRoom();
 				break;
 			case "i want p1":
-				if(pNum==0&&!gameController.gameInfo.chooseP1) {
+				if(!gameController.gameInfo.chooseP1) {
+					if(pNum!=0)
+						gameController.gameInfo.chooseP2 = false;
 					pNum = 1;
 					gameController.gameInfo.chooseP1 = true;
 				}
 				break;
 			case "i want p2":
-				if(pNum==0&&!gameController.gameInfo.chooseP2) {
+				if(!gameController.gameInfo.chooseP2) {
+					if(pNum!=0)
+						gameController.gameInfo.chooseP1 = false;
 					pNum = 2;
 					gameController.gameInfo.chooseP2 = true;
 				}
 				break;
 			case "gameOut":
 				code = "";
-				
-				gameController.numOfPlayer--;
-				
+
 				pNum = 0;
+
+				gameController.numOfPlayer--;
+				gameController.opponentOut = true;
+				
+				gameController.gameInfo.chooseP1 = false;
+				gameController.gameInfo.chooseP2 = false;
 				
 				gameController = null;
 				serverRequest.remove("gameInfo");
@@ -141,8 +150,8 @@ public class ClientThread extends Thread {
 				info.put("roomIn", code);
 				break;
 			case "gameInfo":
-				info.put("gameInfo", GameInfo.copy(gameController.gameInfo));
-//				System.out.println(gameController.gameInfo.boom);
+				info.put("gameInfo", gameController.gameInfo);
+//				System.out.println(pNum + " " + gameController.gameInfo.chooseP1 + " " + gameController.gameInfo.chooseP2);
 				break;
 			case "selectLV":
 				info.put("selectLV", null);
@@ -209,6 +218,17 @@ public class ClientThread extends Thread {
 	}
 	
 	private void connectPInfoAndCheckGameState() {
+		if(gameController.opponentOut) {
+			serverRequest.add("gameEnd");
+			gameController.gameInfo.msg = "AIR COMBAT";
+			pNum = 0;
+			gameController.opponentOut = false;
+			
+			gameController.p1SendEnd = false;
+			gameController.p2SendEnd = false;
+			
+		}
+		
 		if(pNum==1) {
 			if(gameController.p1SendSelectLV) {
 				serverRequest.add("selectLV");
@@ -222,7 +242,7 @@ public class ClientThread extends Thread {
 			}
 			gameController.p1Info = (PlayerInfo) info.get("pInfo");					
 		}
-		else {
+		else if(pNum==2) {
 			if(gameController.p2SendSelectLV) {
 				serverRequest.add("selectLV");
 				gameController.p2SendSelectLV = false;
@@ -247,10 +267,10 @@ public class ClientThread extends Thread {
 			gameController.wall_speed = 5;
 			break;
 		case 2:
-			gameController.wall_speed = 0;
+			gameController.wall_speed = 3;
 			break;
 		case 3:
-			gameController.wall_speed = 0;
+			gameController.wall_speed = 3;
 			gameController.moreWall();
 			break;
 		}
