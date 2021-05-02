@@ -57,8 +57,6 @@ public class ClientThread extends Thread {
 
 				Thread.sleep(1);
 
-//				System.out.println(pNum);
-				
 				info = (Map) ois.readObject();
 				
 				// 클라이언트 요청 처리
@@ -76,7 +74,7 @@ public class ClientThread extends Thread {
 			}
 			sck.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 			
 			System.out.println("Client Disconnect");
 			
@@ -102,34 +100,13 @@ public class ClientThread extends Thread {
 				joinRoom();
 				break;
 			case "i want p1":
-				if(!gameController.gameInfo.chooseP1) {
-					if(pNum!=0)
-						gameController.gameInfo.chooseP2 = false;
-					pNum = 1;
-					gameController.gameInfo.chooseP1 = true;
-				}
+				iWantP1();
 				break;
 			case "i want p2":
-				if(!gameController.gameInfo.chooseP2) {
-					if(pNum!=0)
-						gameController.gameInfo.chooseP1 = false;
-					pNum = 2;
-					gameController.gameInfo.chooseP2 = true;
-				}
+				iWantP2();
 				break;
 			case "gameOut":
-				code = "";
-
-				pNum = 0;
-
-				gameController.numOfPlayer--;
-				gameController.opponentOut = true;
-				
-				gameController.gameInfo.chooseP1 = false;
-				gameController.gameInfo.chooseP2 = false;
-				
-				gameController = null;
-				serverRequest.remove("gameInfo");
+				gameOut();
 				break;
 			case "pInfo":
 				connectPInfoAndCheckGameState();
@@ -151,17 +128,32 @@ public class ClientThread extends Thread {
 				break;
 			case "gameInfo":
 				info.put("gameInfo", gameController.gameInfo);
-//				System.out.println(pNum + " " + gameController.gameInfo.chooseP1 + " " + gameController.gameInfo.chooseP2);
 				break;
 			case "selectLV":
-				info.put("selectLV", null);
+				info.put("selectLV", pNum);
 				break;
 			case "gameStart":
 				info.put("gameStart", null);
 				break;
 			case "gameEnd":
+				
+				String msg = "";
+				
+				if(gameController.gameInfo.msg.equals("p1 win")) {
+					if(pNum==1)
+						msg = "YOU WIN!";
+					else 
+						msg = "YOU LOSE!";
+				}
+				if(gameController.gameInfo.msg.equals("p2 win")) {
+					if(pNum==1)
+						msg = "YOU LOSE!";
+					else 
+						msg = "YOU WIN!";
+				}
+				
 				pNum = 0;
-				info.put("gameEnd", null);
+				info.put("gameEnd", msg);
 				break;
 			}
 		}
@@ -215,6 +207,39 @@ public class ClientThread extends Thread {
 				code += codeSource[(int)(Math.random()*10)];
 			}
 		}
+	}
+	
+	private void iWantP1() {
+		if(!gameController.gameInfo.chooseP1) {
+			if(pNum!=0)
+				gameController.gameInfo.chooseP2 = false;
+			pNum = 1;
+			gameController.gameInfo.chooseP1 = true;
+		}
+	}
+	
+	private void iWantP2() {
+		if(!gameController.gameInfo.chooseP2) {
+			if(pNum!=0)
+				gameController.gameInfo.chooseP1 = false;
+			pNum = 2;
+			gameController.gameInfo.chooseP2 = true;
+		}
+	}
+	
+	private void gameOut() {
+		code = "";
+
+		pNum = 0;
+
+		gameController.numOfPlayer--;
+		gameController.opponentOut = true;
+		
+		gameController.gameInfo.chooseP1 = false;
+		gameController.gameInfo.chooseP2 = false;
+		
+		gameController = null;
+		serverRequest.remove("gameInfo");
 	}
 	
 	private void connectPInfoAndCheckGameState() {

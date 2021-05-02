@@ -7,9 +7,13 @@ import java.util.Set;
 public class GameInfo implements Serializable {
 
 	public int[][] bulletSet;
+	public int[][] itemBox;
 	
 	public int[] p1;
 	public int[] p2;
+	
+	public String p1Move;
+	public String p2Move;
 	
 	public int p1_gauge;
 	public int p2_gauge;
@@ -29,6 +33,4 @@ public class GameInfo implements Serializable {
 
 	public int boom[][]; // 추가
 	
-	public int item[]; // 추가
-
 }

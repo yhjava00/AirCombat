@@ -14,6 +14,7 @@ import java.awt.event.KeyEvent;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 
 import info.GameInfo;
@@ -24,31 +25,54 @@ public class GamePanel extends JPanel{
 	private final int MAP_HEIGHT = 700;
 	private final int MAP_WIDTH = 500;
 	
-	private final int PLANE_HEIGHT = 37;
+	private final int PLANE_HEIGHT = 31;
 	private final int PLANE_WIDTH = 50;
 	
 	private final int BULLET_HEIGHT = 22;
 	private final int BULLET_WIDTH = 25;
+
+	private final int ITEM_HEIGHT = 30;
+	private final int ITEM_WIDTH = 30;
 	
 	public Label guide_label = new Label();
-	public Button p1Btn = new Button("player 01");
-	public Button p2Btn = new Button("player 02");
 	
-	public Button lv1Btn = new Button("Level 1");//
-	public Button lv2Btn = new Button("Level 2");//
-	public Button lv3Btn = new Button("Level 3");//
-
-	private Image plane1 = new ImageIcon(GamePanel.class.getResource("../image/plane1.png")).getImage();
-	private Image plane2 = new ImageIcon(GamePanel.class.getResource("../image/plane2.png")).getImage();
+	private Image plane1 = new ImageIcon(GamePanel.class.getResource("../image/p1.png")).getImage();
+	private Image plane1L = new ImageIcon(GamePanel.class.getResource("../image/p1L.png")).getImage();
+	private Image plane1R = new ImageIcon(GamePanel.class.getResource("../image/p1R.png")).getImage();
+	private Image plane2 = new ImageIcon(GamePanel.class.getResource("../image/p2.png")).getImage();
+	private Image plane2L = new ImageIcon(GamePanel.class.getResource("../image/p2L.png")).getImage();
+	private Image plane2R = new ImageIcon(GamePanel.class.getResource("../image/p2R.png")).getImage();
 	private Image p1Wave = new ImageIcon(GamePanel.class.getResource("../image/p1Wave.png")).getImage();
 	private Image p2Wave = new ImageIcon(GamePanel.class.getResource("../image/p2Wave.png")).getImage();
 	private Image p1WaveLV1 = new ImageIcon(GamePanel.class.getResource("../image/p1WaveLV1.png")).getImage();
 	private Image p2WaveLV1 = new ImageIcon(GamePanel.class.getResource("../image/p2WaveLV1.png")).getImage();
 	// 추가
-	private Image itemImg = new ImageIcon(GamePanel.class.getResource("../image/item.png")).getImage();
+	private Image heartImg = new ImageIcon(GamePanel.class.getResource("../image/heart.png")).getImage();
+	private Image damageImg = new ImageIcon(GamePanel.class.getResource("../image/damage.png")).getImage();
 	private Image boomImg = new ImageIcon(GamePanel.class.getResource("../image/boom.png")).getImage();
 	private Image wallImg = new ImageIcon(GamePanel.class.getResource("../image/wall.png")).getImage();
 	private Image backgroundImg = new ImageIcon(GamePanel.class.getResource("../image/background.png")).getImage();
+	private Image player01BtnPath = new ImageIcon(GamePanel.class.getResource("../image/player01Btn.png")).getImage();
+	private Image player02BtnPath = new ImageIcon(GamePanel.class.getResource("../image/player02Btn.png")).getImage();
+	private Image level1Path = new ImageIcon(GamePanel.class.getResource("../image/level1.png")).getImage();
+	private Image level2Path = new ImageIcon(GamePanel.class.getResource("../image/level2.png")).getImage(); 
+	private Image level3Path = new ImageIcon(GamePanel.class.getResource("../image/level3.png")).getImage();
+	private Image selectedP1Path = new ImageIcon(GamePanel.class.getResource("../image/player01BtnSelect.png")).getImage();
+	private Image selectedP2Path = new ImageIcon(GamePanel.class.getResource("../image/player02BtnSelect.png")).getImage();
+
+	public ImageIcon Player01Btn = new ImageIcon(player01BtnPath); 
+	public ImageIcon Player02Btn = new ImageIcon(player02BtnPath);
+	private ImageIcon Level1Btn = new ImageIcon(level1Path);
+	private ImageIcon Level2Btn = new ImageIcon(level2Path);
+	private ImageIcon Level3Btn = new ImageIcon(level3Path);
+	public ImageIcon SelectedP1 = new ImageIcon(selectedP1Path);
+	public ImageIcon SelectedP2 = new ImageIcon(selectedP2Path);
+	
+	public JButton p1Btn = new JButton(Player01Btn);
+	public JButton p2Btn = new JButton(Player02Btn);
+	public JButton lv1Btn = new JButton(Level1Btn);
+	public JButton lv2Btn = new JButton(Level2Btn);
+	public JButton lv3Btn = new JButton(Level3Btn);
 	
 	private boolean checkRepaint;
 	private boolean backgroundMove;
@@ -129,10 +153,14 @@ public class GamePanel extends JPanel{
         pInfo.charging = false;
 	}
 	
-	public void addLabelAndButton() {
-		
-		guide_label.setText(gameInfo.msg);
-
+	public void addLabelAndButton(String msg) {
+				
+		if(msg.equals("")) {			
+			guide_label.setText(gameInfo.msg);
+		}
+		else
+			guide_label.setText(msg);
+			
 		p1Btn.setBackground(null);
 		p2Btn.setBackground(null);
 		
@@ -147,8 +175,11 @@ public class GamePanel extends JPanel{
 	}
 
 	// 추가
-	public void addSelectLevelButton() {
-		guide_label.setText("PLEASE SELECT LEVEL");
+	public void addSelectLevelButton(int p) {
+		if(p==1)
+			guide_label.setText("PLEASE  SELECT  LEVEL");
+		else
+			guide_label.setText("PLEASE  WAIT  PLAYER01");
 		add(guide_label);
 		add(lv1Btn);
 		add(lv2Btn);
@@ -186,8 +217,19 @@ public class GamePanel extends JPanel{
 		g.drawImage(backgroundImg , 0 , backgroundLocate , null); // 추가
 		g.drawImage(backgroundImg , 0 , backgroundLocate-MAP_HEIGHT , null); // 추가
 		
-		g.drawImage(plane1, gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1], null);
-		g.drawImage(plane2, gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1], null);
+		if(gameInfo.p1Move.equals("left"))
+			g.drawImage(plane1L, gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1], null);
+		else if(gameInfo.p1Move.equals("right"))
+			g.drawImage(plane1R, gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1], null);
+		else
+			g.drawImage(plane1, gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1], null);
+
+		if(gameInfo.p2Move.equals("left"))
+			g.drawImage(plane2L, gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1], null);
+		else if(gameInfo.p2Move.equals("right"))
+			g.drawImage(plane2R, gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1], null);
+		else
+			g.drawImage(plane2, gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1], null);
 		
 		switch (gameInfo.p1_gauge_lv) {
 		case 0:
@@ -195,16 +237,16 @@ public class GamePanel extends JPanel{
 			break;
 		case 1:
 			g.setColor(Color.yellow);
-			g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+37, PLANE_WIDTH, 10);
+			g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+PLANE_HEIGHT, PLANE_WIDTH, 10);
 			g.setColor(Color.BLUE);
 			break;
 		case 2:
 			g.setColor(Color.BLUE);
-			g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+37, PLANE_WIDTH, 10);
+			g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+PLANE_HEIGHT, PLANE_WIDTH, 10);
 			g.setColor(Color.BLACK);	
 			break;
 		}
-		g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+37, gameInfo.p1_gauge, 10);
+		g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+PLANE_HEIGHT, gameInfo.p1_gauge, 10);
 		
 		switch (gameInfo.p2_gauge_lv) {
 		case 0:
@@ -212,20 +254,20 @@ public class GamePanel extends JPanel{
 			break;
 		case 1:
 			g.setColor(Color.yellow);
-			g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+37, PLANE_WIDTH, 10);
+			g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+PLANE_HEIGHT, PLANE_WIDTH, 10);
 			g.setColor(Color.BLUE);
 			break;
 		case 2:
 			g.setColor(Color.BLUE);
-			g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+37, PLANE_WIDTH, 10);
+			g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+PLANE_HEIGHT, PLANE_WIDTH, 10);
 			g.setColor(Color.BLACK);	
 			break;
 		}
-		g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+37, gameInfo.p2_gauge, 10);
+		g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+PLANE_HEIGHT, gameInfo.p2_gauge, 10);
 
 		g.setColor(Color.RED);
-		g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+47 , gameInfo.p1_HP , 10);
-		g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+47 , gameInfo.p2_HP , 10);
+		g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+PLANE_HEIGHT+10 , gameInfo.p1_HP , 10);
+		g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+PLANE_HEIGHT+10 , gameInfo.p2_HP , 10);
 		
 		for(int i=0; i<gameInfo.wall.length; i++) {
 			g.drawImage(wallImg, gameInfo.wall[i][0], gameInfo.wall[i][1], null); // 추가			
@@ -254,9 +296,18 @@ public class GamePanel extends JPanel{
 				g.drawImage(boomImg, boom[0]-20, boom[1] , null);
 			}
 		}
-
-		if(gameInfo.item[3] != 0) 
-			g.drawImage(itemImg, gameInfo.item[0] , gameInfo.item[1] , null); 
+		
+		
+		for(int[] item : gameInfo.itemBox) {
+			
+			if(item[4]==0)
+				continue;
+			
+			if(item[2]==0) 				
+				g.drawImage(damageImg, item[0] , item[1] , null);
+			else
+				g.drawImage(heartImg, item[0] , item[1] , null);
+		}
 		
 	}
 	
@@ -289,6 +340,8 @@ public class GamePanel extends JPanel{
 			case KeyEvent.VK_SPACE:
 				pInfo.charging = false;
 				break;
+			case KeyEvent.VK_T:
+				pInfo.move = "test";
             }
 		}
 	}
@@ -312,7 +365,8 @@ public class GamePanel extends JPanel{
 		public void run() {
 			while(backgroundMove) {
 				try {
-					Thread.sleep(7);
+					int speed = (100 - gameInfo.p1_HP - gameInfo.p2_HP)/10;
+					Thread.sleep(11-speed);
 				} catch (Exception e) {}
 
 				backgroundLocate++;

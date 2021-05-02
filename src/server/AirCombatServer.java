@@ -21,10 +21,14 @@ public class AirCombatServer {
 			
 			server = new ServerSocket(1234);
 			
+			System.out.println("server start");
+			
 			while(true) {
-				System.out.println("wait client");
 				
 				Socket sck = server.accept();
+				
+				System.out.println("connect client");
+				
 				Thread ct = new ClientThread(sck);
 				sck.setTcpNoDelay(true);
 				

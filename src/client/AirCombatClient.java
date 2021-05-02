@@ -127,7 +127,7 @@ public class AirCombatClient {
 				waitingBoard.startPage.setVisible(false);
 				waitingBoard.waitingPage.setVisible(true);
 
-				gamePanel.addLabelAndButton();
+				gamePanel.addLabelAndButton("");
 				
 				gameBoard = new GameBoard(gamePanel);
 				
@@ -138,28 +138,28 @@ public class AirCombatClient {
 				gamePanel.gameInfo = (GameInfo) info.get("gameInfo");
 				
 				if(gamePanel.gameInfo.chooseP1) {
-					gamePanel.p1Btn.setBackground(Color.GREEN);
+					gamePanel.p1Btn.setIcon(gamePanel.SelectedP1);
 				}else {
-					gamePanel.p1Btn.setBackground(null);
+					gamePanel.p1Btn.setIcon(gamePanel.Player01Btn);
 				}
 				if(gamePanel.gameInfo.chooseP2) {
-					gamePanel.p2Btn.setBackground(Color.GREEN);
+					gamePanel.p2Btn.setIcon(gamePanel.SelectedP2);
 				}else {
-					gamePanel.p2Btn.setBackground(null);
+					gamePanel.p2Btn.setIcon(gamePanel.Player02Btn);
 				}
 				
 				clientRequest.add("pInfo");
 				break;
 			case "selectLV":
 				gamePanel.removeLabelAndButton();
-				gamePanel.addSelectLevelButton(); // 추가
+				gamePanel.addSelectLevelButton((int)info.get("selectLV")); // 추가
 				break;
 			case "gameStart":
 				gamePanel.removeSelectLevelButton(); // 추가
 				break;
 			case "gameEnd":
 				gamePanel.removeSelectLevelButton();
-				gamePanel.addLabelAndButton();
+				gamePanel.addLabelAndButton((String)info.get("gameEnd"));
 				break;
 			}
 		}

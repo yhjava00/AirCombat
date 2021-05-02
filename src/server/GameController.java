@@ -10,7 +10,7 @@ public class GameController extends Thread {
 	private final int MAP_HEIGHT = 700;
 	private final int MAP_WIDTH = 500;
 	
-	private final int PLANE_HEIGHT = 37;
+	private final int PLANE_HEIGHT = 31;
 	private final int PLANE_WIDTH = 50;
 	
 	private final int BULLET_HEIGHT = 22;
@@ -110,7 +110,7 @@ public class GameController extends Thread {
 				} catch (Exception e) {}
 				
 				playerMove();
-				itemAdministrate();
+				itemMove();
 				checkBulletCharging();
 				checkBulletCreate();
 				bulletMoveAndCheckHit();
@@ -144,9 +144,13 @@ public class GameController extends Thread {
 		p2Info.charging = false;
 		
 		gameInfo.bulletSet = new int[100][5];
+		gameInfo.itemBox = new int[30][6];
 		
 		gameInfo.p1 = new int[] {250, MAP_HEIGHT-PLANE_HEIGHT-20};
 		gameInfo.p2 = new int[] {250, 0};
+		
+		gameInfo.p1Move = "stop";
+		gameInfo.p2Move = "stop";
 		
 		gameInfo.p1_gauge = 0;
 		gameInfo.p2_gauge = 0;
@@ -159,14 +163,15 @@ public class GameController extends Thread {
 	
 		gameInfo.wall = new int[5][4]; // 추가
 		
-		gameInfo.item = new int[4];
-		
 		gameInfo.msg = "";
 		
 		gameInfo.chooseP1 = false;
 		gameInfo.chooseP2 = false;
 
 		gameInfo.boom = new int[10][3]; // 추가
+		
+		p1LV2Stack = 0;
+		p2LV2Stack = 0;
 		
 		inGame = false;
 		
@@ -181,6 +186,9 @@ public class GameController extends Thread {
 	}
 	
 	private void playerMove() {
+		
+		gameInfo.p1Move = p1Info.move;
+		gameInfo.p2Move = p2Info.move;
 		
 		if(p2Info.move.equals("left") &&
 				0 < gameInfo.p2[0] - (PLANE_WIDTH/2)) {
@@ -200,83 +208,81 @@ public class GameController extends Thread {
 	}
 	
 	// 추가
-	private void itemAdministrate() {
-		
-		if(gameInfo.item[3]!=0) {
-			itemMove();
-			return;
-		}
-		
-		if((int)(Math.random()*5000) == 0) {
-			gameInfo.item[0] = (int)((Math.random()*100)+200);
-			gameInfo.item[1] = (int)((Math.random()*100)+200);
-			gameInfo.item[2] = (int)((Math.random()*4)+1);
-			gameInfo.item[3] = 1;
-		}
-	}
-	
-	// 추가
 	private void itemMove() {
-		if(itemTick < 4) {
+		if(itemTick < 3) {
 			itemTick++;
 			return;
 		}
 		itemTick = 0;
 		
-		switch(gameInfo.item[2]) {
-		case 1:
-			gameInfo.item[0] --;
-			gameInfo.item[1] --;
-			if(gameInfo.item[0] == 0) {
-				gameInfo.item[2] = 2;
-			}else if(gameInfo.item[1] == 0) {
-				gameInfo.item[2] = 4;
-			}
-			break;
-		case 2:
-			gameInfo.item[0] ++;
-			gameInfo.item[1] --;
-			if(gameInfo.item[1] == 0) {
-				gameInfo.item[2] = 3;
-			}else if(gameInfo.item[0] == MAP_WIDTH-ITEM_WIDTH) {
-				gameInfo.item[2] = 1;
-			}
-			break;
-		case 3:
-			gameInfo.item[0] ++;
-			gameInfo.item[1] ++;
-			if(gameInfo.item[0] == MAP_WIDTH-ITEM_WIDTH) {
-				gameInfo.item[2] = 4;
-			}else if(gameInfo.item[1] == MAP_HEIGHT-ITEM_HEIGHT) {
-				gameInfo.item[2] = 2;
-			}
-			break;
-		case 4:
-			gameInfo.item[0] --;
-			gameInfo.item[1] ++;
-			if(gameInfo.item[1] == MAP_HEIGHT-ITEM_HEIGHT) {
-				gameInfo.item[2] = 1;
-			}else if(gameInfo.item[0] == 0) {
-				gameInfo.item[2] = 3;
-			}
-			break;
-		}
-		
-		if((gameInfo.item[0]+30 >= gameInfo.p1[0]-25 && gameInfo.item[0] <= gameInfo.p1[0]+25) 
-			&& (gameInfo.item[1] + 30 >= gameInfo.p1[1] && gameInfo.item[1] <= gameInfo.p1[1]+37)) {
-			gameInfo.item[3] = 0;
-			if(gameInfo.p1_HP != 50) {
-				gameInfo.p1_HP += 10;
-			}
-		}
-		
-		if((gameInfo.item[0]+30 >= gameInfo.p2[0]-25 && gameInfo.item[0] <= gameInfo.p2[0]+25) 
-				&& (gameInfo.item[1] >= gameInfo.p2[1] && gameInfo.item[1] <= gameInfo.p2[1]+37)) {
-			gameInfo.item[3] = 0;
-				if(gameInfo.p2_HP != 50) {
-					gameInfo.p2_HP += 10;
+		for(int i=0; i<gameInfo.itemBox.length; i++) {
+			if(gameInfo.itemBox[i][4]==0)
+				continue;
+			
+			switch(gameInfo.itemBox[i][3]) {
+			case 0:
+				gameInfo.itemBox[i][0] -= gameInfo.itemBox[i][5];
+				gameInfo.itemBox[i][1] -= gameInfo.itemBox[i][5];
+				if(gameInfo.itemBox[i][0] <= 0) {
+					gameInfo.itemBox[i][3] = 1;
+				}else if(gameInfo.itemBox[i][1] <= 0) {
+					gameInfo.itemBox[i][3] = 3;
 				}
-			}	
+				break;
+			case 1:
+				gameInfo.itemBox[i][0] += gameInfo.itemBox[i][5];
+				gameInfo.itemBox[i][1] -= gameInfo.itemBox[i][5];
+				if(gameInfo.itemBox[i][1] <= 0) {
+					gameInfo.itemBox[i][3] = 2;
+				}else if(gameInfo.itemBox[i][0] >= MAP_WIDTH-ITEM_WIDTH) {
+					gameInfo.itemBox[i][3] = 0;
+				}
+				break;
+			case 2:
+				gameInfo.itemBox[i][0] += gameInfo.itemBox[i][5];
+				gameInfo.itemBox[i][1] += gameInfo.itemBox[i][5];
+				if(gameInfo.itemBox[i][0] >= MAP_WIDTH-ITEM_WIDTH) {
+					gameInfo.itemBox[i][3] = 3;
+				}else if(gameInfo.itemBox[i][1] >= MAP_HEIGHT-ITEM_HEIGHT) {
+					gameInfo.itemBox[i][3] = 1;
+				}
+				break;
+			case 3:
+				gameInfo.itemBox[i][0] -= gameInfo.itemBox[i][5];
+				gameInfo.itemBox[i][1] += gameInfo.itemBox[i][5];
+				if(gameInfo.itemBox[i][1] >= MAP_HEIGHT-ITEM_HEIGHT) {
+					gameInfo.itemBox[i][3] = 0;
+				}else if(gameInfo.itemBox[i][0] <= 0) {
+					gameInfo.itemBox[i][3] = 2;
+				}
+				break;
+			}
+			
+			if((int)(Math.random()*500)==0) {
+				gameInfo.itemBox[i][2] = (int)((Math.random()*2));
+			}
+			
+			if((gameInfo.itemBox[i][0] + ITEM_WIDTH >= gameInfo.p1[0]-(PLANE_WIDTH/2) && gameInfo.itemBox[i][0] <= gameInfo.p1[0]+(PLANE_WIDTH/2)) 
+				&& (gameInfo.itemBox[i][1] + ITEM_HEIGHT >= gameInfo.p1[1] && gameInfo.itemBox[i][1] <= gameInfo.p1[1]+PLANE_HEIGHT)) {
+				gameInfo.itemBox[i][4] = 0;
+				if(gameInfo.itemBox[i][2]==1 && gameInfo.p1_HP != 50) {
+					gameInfo.p1_HP += 10;
+				}else {
+					gameInfo.p1_HP -= 10;
+				}
+			}
+			
+			if((gameInfo.itemBox[i][0]+ITEM_WIDTH >= gameInfo.p2[0]-(PLANE_WIDTH/2) && gameInfo.itemBox[i][0] <= gameInfo.p2[0]+(PLANE_WIDTH/2)) 
+					&& (gameInfo.itemBox[i][1] >= gameInfo.p2[1] && gameInfo.itemBox[i][1] <= gameInfo.p2[1]+PLANE_HEIGHT)) {
+				gameInfo.itemBox[i][4] = 0;
+				if(gameInfo.itemBox[i][2]==1 && gameInfo.p2_HP != 50) {
+					gameInfo.p2_HP += 10;
+				}else {
+					gameInfo.p2_HP -= 10;
+				}
+				}
+			
+		}
 	}
 	
 	private void checkBulletCharging() {
@@ -361,12 +367,16 @@ public class GameController extends Thread {
 			if(bullet[1]<(PLANE_HEIGHT)&&(bullet[0]>=gameInfo.p2[0]-(PLANE_WIDTH/2)&&bullet[0]<=gameInfo.p2[0]+(PLANE_WIDTH/2))) {
 				bullet[4] = 0;
 				createBoom(bullet, 2);
-				gameInfo.p2_HP -= 10;
+				createItem();
+				if(gameInfo.p2_HP>0)
+					gameInfo.p2_HP -= 10;
 			}
 			if(bullet[1]>(MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20)&&(bullet[0]>=gameInfo.p1[0]-(PLANE_WIDTH/2)&&bullet[0]<=gameInfo.p1[0]+(PLANE_WIDTH/2))) {
 				bullet[4] = 0;
 				createBoom(bullet, 1);
-				gameInfo.p1_HP -= 10;
+				createItem();
+				if(gameInfo.p1_HP>0)
+					gameInfo.p1_HP -= 10;
 			}
 
 			// 추가
@@ -437,6 +447,31 @@ public class GameController extends Thread {
 			}
 		}
 	}
+
+	private void createItem() {
+		
+		int n = (int)((Math.random()*4));
+		
+		while(n-->0) {
+			;
+			
+			for(int idx=0;idx<gameInfo.itemBox.length; idx++) {
+				
+				if(gameInfo.itemBox[idx][4]!=0) {
+					continue;
+				}
+				
+				gameInfo.itemBox[idx][0] = (int)((Math.random()*100)+200);
+				gameInfo.itemBox[idx][1] = (int)((Math.random()*100)+200);
+				gameInfo.itemBox[idx][2] = (int)((Math.random()*2));
+				gameInfo.itemBox[idx][3] = (int)((Math.random()*4));
+				gameInfo.itemBox[idx][4] = 1;
+				gameInfo.itemBox[idx][5] = (int)((Math.random()*3)+1);
+				
+				break;
+			}
+		}
+	}
 	
 	// 추가
 	private void createWall(int w1) {
@@ -502,11 +537,11 @@ public class GameController extends Thread {
 			return true;	
 		}
 		if(gameInfo.p1_HP<=0) {
-			gameInfo.msg = "PLAYER2 WIN!";
+			gameInfo.msg = "p2 win";
 			return true;
 		}
 		if(gameInfo.p2_HP<=0) {
-			gameInfo.msg = "PLAYER1 WIN!";
+			gameInfo.msg = "p1 win";
 			return true;
 		}
 		return false;
