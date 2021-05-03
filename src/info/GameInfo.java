@@ -23,6 +23,9 @@ public class GameInfo implements Serializable {
 	
 	public int p1_HP;
 	public int p2_HP;
+	
+	public int p1Super;
+	public int p2Super;
 
 	public int[][] wall; // 추가
 	

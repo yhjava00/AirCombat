@@ -293,10 +293,11 @@ public class ClientThread extends Thread {
 			break;
 		case 2:
 			gameController.wall_speed = 3;
+			gameController.moreWall(5);
 			break;
 		case 3:
 			gameController.wall_speed = 3;
-			gameController.moreWall();
+			gameController.moreWall(9);
 			break;
 		}
 		

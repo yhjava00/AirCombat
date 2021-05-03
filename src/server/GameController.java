@@ -160,8 +160,11 @@ public class GameController extends Thread {
 		
 		gameInfo.p1_HP = 50;
 		gameInfo.p2_HP = 50;
-	
-		gameInfo.wall = new int[5][4]; // 추가
+		
+		gameInfo.p1Super = 0;
+		gameInfo.p2Super = 0;
+		
+		gameInfo.wall = new int[3][4]; // 추가
 		
 		gameInfo.msg = "";
 		
@@ -259,7 +262,7 @@ public class GameController extends Thread {
 			}
 			
 			if((int)(Math.random()*500)==0) {
-				gameInfo.itemBox[i][2] = (int)((Math.random()*2));
+				gameInfo.itemBox[i][2] = (int)((Math.random()*3));
 			}
 			
 			if((gameInfo.itemBox[i][0] + ITEM_WIDTH >= gameInfo.p1[0]-(PLANE_WIDTH/2) && gameInfo.itemBox[i][0] <= gameInfo.p1[0]+(PLANE_WIDTH/2)) 
@@ -267,8 +270,10 @@ public class GameController extends Thread {
 				gameInfo.itemBox[i][4] = 0;
 				if(gameInfo.itemBox[i][2]==1 && gameInfo.p1_HP != 50) {
 					gameInfo.p1_HP += 10;
-				}else {
+				}else if(gameInfo.itemBox[i][2]==0) {
 					gameInfo.p1_HP -= 10;
+				}else if(gameInfo.itemBox[i][2]==2) {
+					gameInfo.p1Super += 5;
 				}
 			}
 			
@@ -277,10 +282,12 @@ public class GameController extends Thread {
 				gameInfo.itemBox[i][4] = 0;
 				if(gameInfo.itemBox[i][2]==1 && gameInfo.p2_HP != 50) {
 					gameInfo.p2_HP += 10;
-				}else {
+				}else if(gameInfo.itemBox[i][2]==0) {
 					gameInfo.p2_HP -= 10;
+				}else if(gameInfo.itemBox[i][2]==2) {
+					gameInfo.p2Super += 5;
 				}
-				}
+			}
 			
 		}
 	}
@@ -328,20 +335,34 @@ public class GameController extends Thread {
 			
 			if(gameInfo.p1_gauge==PLANE_WIDTH)
 				createBullet(1, gameInfo.p1_gauge_lv);
-			else if(gameInfo.p1_gauge!=0)
-				createBullet(1, gameInfo.p1_gauge_lv-1);
+			else if(gameInfo.p1_gauge!=0) {
+				if(gameInfo.p1Super>0) {
+					gameInfo.p1Super--;
+					createBullet(1, 1);
+				}
+				else
+					createBullet(1, gameInfo.p1_gauge_lv-1);
+			}
 			
 			gameInfo.p1_gauge = 0;
+			p1_gauge_tick = 0;
 			gameInfo.p1_gauge_lv = 0;
 		}
 		if(!p2Info.charging) {
 
 			if(gameInfo.p2_gauge==PLANE_WIDTH)
 				createBullet(2, gameInfo.p2_gauge_lv);
-			else if(gameInfo.p2_gauge!=0)
-				createBullet(2, gameInfo.p2_gauge_lv-1);
+			else if(gameInfo.p2_gauge!=0) {
+				if(gameInfo.p2Super>0) {
+					gameInfo.p2Super--;
+					createBullet(2, 1);
+				}
+				else
+					createBullet(2, gameInfo.p2_gauge_lv-1);					
+			}
 			
 			gameInfo.p2_gauge = 0;
+			p2_gauge_tick = 0;
 			gameInfo.p2_gauge_lv = 0;
 		}
 	}
@@ -463,7 +484,7 @@ public class GameController extends Thread {
 				
 				gameInfo.itemBox[idx][0] = (int)((Math.random()*100)+200);
 				gameInfo.itemBox[idx][1] = (int)((Math.random()*100)+200);
-				gameInfo.itemBox[idx][2] = (int)((Math.random()*2));
+				gameInfo.itemBox[idx][2] = (int)((Math.random()*3));
 				gameInfo.itemBox[idx][3] = (int)((Math.random()*4));
 				gameInfo.itemBox[idx][4] = 1;
 				gameInfo.itemBox[idx][5] = (int)((Math.random()*3)+1);
@@ -516,8 +537,8 @@ public class GameController extends Thread {
 		}
 	}
 	
-	protected void moreWall() {
-		gameInfo.wall = new int[9][4];
+	protected void moreWall(int n) {
+		gameInfo.wall = new int[n][4];
 		
 		for(int i=0; i<gameInfo.wall.length; i++) {
 			createWall(i);

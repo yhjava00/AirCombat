@@ -1,6 +1,5 @@
 package panel;
 
-import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -13,6 +12,9 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Set;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -46,9 +48,9 @@ public class GamePanel extends JPanel{
 	private Image p2Wave = new ImageIcon(GamePanel.class.getResource("../image/p2Wave.png")).getImage();
 	private Image p1WaveLV1 = new ImageIcon(GamePanel.class.getResource("../image/p1WaveLV1.png")).getImage();
 	private Image p2WaveLV1 = new ImageIcon(GamePanel.class.getResource("../image/p2WaveLV1.png")).getImage();
-	// 추가
 	private Image heartImg = new ImageIcon(GamePanel.class.getResource("../image/heart.png")).getImage();
 	private Image damageImg = new ImageIcon(GamePanel.class.getResource("../image/damage.png")).getImage();
+	private Image superImg = new ImageIcon(GamePanel.class.getResource("../image/super.png")).getImage();
 	private Image boomImg = new ImageIcon(GamePanel.class.getResource("../image/boom.png")).getImage();
 	private Image wallImg = new ImageIcon(GamePanel.class.getResource("../image/wall.png")).getImage();
 	private Image backgroundImg = new ImageIcon(GamePanel.class.getResource("../image/background.png")).getImage();
@@ -59,7 +61,7 @@ public class GamePanel extends JPanel{
 	private Image level3Path = new ImageIcon(GamePanel.class.getResource("../image/level3.png")).getImage();
 	private Image selectedP1Path = new ImageIcon(GamePanel.class.getResource("../image/player01BtnSelect.png")).getImage();
 	private Image selectedP2Path = new ImageIcon(GamePanel.class.getResource("../image/player02BtnSelect.png")).getImage();
-
+	
 	public ImageIcon Player01Btn = new ImageIcon(player01BtnPath); 
 	public ImageIcon Player02Btn = new ImageIcon(player02BtnPath);
 	private ImageIcon Level1Btn = new ImageIcon(level1Path);
@@ -74,10 +76,11 @@ public class GamePanel extends JPanel{
 	public JButton lv2Btn = new JButton(Level2Btn);
 	public JButton lv3Btn = new JButton(Level3Btn);
 	
-	private boolean checkRepaint;
-	private boolean backgroundMove;
+	private boolean inGame;
 	
 	private int backgroundLocate = 0;
+	
+	private Clip bgm;
 	
 	public GameInfo gameInfo;
 	public PlayerInfo pInfo;
@@ -196,26 +199,52 @@ public class GamePanel extends JPanel{
 	
 	public void gameStart() {
 		
-		checkRepaint = true;
+		inGame = true;
+		
+		try {
+			bgm = AudioSystem.getClip();
+			AudioInputStream inputStream = AudioSystem.getAudioInputStream(
+					GamePanel.class.getResourceAsStream("../audio/bgm.wav"));
+			bgm.open(inputStream);
+			bgm.start();
+			bgm.loop(-1);
+		} catch (Exception e) {}
+		
 		repaintThread = new RepaintThread();
 		repaintThread.start();
 		
-		backgroundMove = true;
 		backgroundMoveThread = new BackGroundMoveThread();
 		backgroundMoveThread.start();
+		
 	}
 	
 	public void gameStop() {
-		checkRepaint = false;
-		backgroundMove = false;
+		
+		if(bgm!=null)
+			bgm.stop();
+		
+		inGame = false;
 	}
+	
+	private void makeAudio(String name) {
 
+		try {
+			Clip clip = AudioSystem.getClip();
+			AudioInputStream inputStream = AudioSystem.getAudioInputStream(
+			          GamePanel.class.getResourceAsStream("../audio/" + name));
+			clip.open(inputStream);
+			clip.start();
+		} catch (Exception e) {}
+		
+		
+	}
+	
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		
-		g.drawImage(backgroundImg , 0 , backgroundLocate , null); // 추가
-		g.drawImage(backgroundImg , 0 , backgroundLocate-MAP_HEIGHT , null); // 추가
+		g.drawImage(backgroundImg, 0, backgroundLocate, null); // 추가
+		g.drawImage(backgroundImg, 0, backgroundLocate-MAP_HEIGHT, null); // 추가
 		
 		if(gameInfo.p1Move.equals("left"))
 			g.drawImage(plane1L, gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1], null);
@@ -264,9 +293,17 @@ public class GamePanel extends JPanel{
 			break;
 		}
 		g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+PLANE_HEIGHT, gameInfo.p2_gauge, 10);
-
-		g.setColor(Color.RED);
+		
+		if(gameInfo.p1Super>0)
+			g.setColor(Color.MAGENTA);
+		else
+			g.setColor(Color.RED);
 		g.fillRect(gameInfo.p1[0]-(PLANE_WIDTH/2), gameInfo.p1[1]+PLANE_HEIGHT+10 , gameInfo.p1_HP , 10);
+		
+		if(gameInfo.p2Super>0)
+			g.setColor(Color.MAGENTA);
+		else
+			g.setColor(Color.RED);
 		g.fillRect(gameInfo.p2[0]-(PLANE_WIDTH/2), gameInfo.p2[1]+PLANE_HEIGHT+10 , gameInfo.p2_HP , 10);
 		
 		for(int i=0; i<gameInfo.wall.length; i++) {
@@ -279,15 +316,29 @@ public class GamePanel extends JPanel{
 				continue;
 			
 			if(bullet[2]==1) {
-				if(bullet[3]<0)
+				
+				if(bullet[3]<0) {
+					if(bullet[1]>=MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20 - 10)
+						makeAudio("gun1.wav");
 					g.drawImage(p1Wave, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
-				else
+				}
+				else {
+					if(bullet[1]>=MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20 - 10)
+						makeAudio("gun2.wav");
 					g.drawImage(p1WaveLV1, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
+				}
 			}else if(bullet[2]==2) {
-				if(bullet[3]<0)
+				
+				if(bullet[3]<0) {
+					if(bullet[1]<=PLANE_HEIGHT + 10)
+						makeAudio("gun1.wav");
 					g.drawImage(p2Wave, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
-				else
+				}
+				else {
+					if(bullet[1]<=PLANE_HEIGHT + 10)
+						makeAudio("gun2.wav");					
 					g.drawImage(p2WaveLV1, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
+				}
 			}
 		}
 		
@@ -304,9 +355,11 @@ public class GamePanel extends JPanel{
 				continue;
 			
 			if(item[2]==0) 				
-				g.drawImage(damageImg, item[0] , item[1] , null);
-			else
-				g.drawImage(heartImg, item[0] , item[1] , null);
+				g.drawImage(damageImg, item[0], item[1], null);
+			else if(item[2]==1)
+				g.drawImage(heartImg, item[0], item[1], null);
+			else if(item[2]==2) 
+				g.drawImage(superImg, item[0], item[1], null);
 		}
 		
 	}
@@ -349,7 +402,7 @@ public class GamePanel extends JPanel{
 	class RepaintThread extends Thread {
 		@Override
 		public void run() {
-			while(checkRepaint) {
+			while(inGame) {
 				try {
 					Thread.sleep(1);
 				} catch (Exception e) {}
@@ -363,10 +416,12 @@ public class GamePanel extends JPanel{
 	class BackGroundMoveThread extends Thread {
 		@Override
 		public void run() {
-			while(backgroundMove) {
+			while(inGame) {
+				
+				int speed = getSpeed();
+				
 				try {
-					int speed = (100 - gameInfo.p1_HP - gameInfo.p2_HP)/10;
-					Thread.sleep(11-speed);
+					Thread.sleep(speed);
 				} catch (Exception e) {}
 
 				backgroundLocate++;
@@ -375,6 +430,29 @@ public class GamePanel extends JPanel{
 					backgroundLocate = 0;	
 			}
 		}
+	}
+	
+	private int getSpeed() {
+
+		switch ((gameInfo.p1_HP+gameInfo.p2_HP)/10) {
+		case 10:
+			return 10;
+		case 9:
+			return 7;
+		case 8:
+			return 5;
+		case 7:
+			return 4;
+		case 6:
+			return 3;
+		case 5:
+		case 4:
+		case 3:
+			return 2;
+		default:
+			return 1;
+		}
+		
 	}
 	
 }
