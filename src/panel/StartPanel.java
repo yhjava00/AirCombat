@@ -37,6 +37,7 @@ public class StartPanel extends JPanel {
         makeRoom.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				GamePanel.makeAudio("click.wav");
 				board.makeRoom();
 			}
 		});
@@ -50,6 +51,7 @@ public class StartPanel extends JPanel {
         joinRoom.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				GamePanel.makeAudio("click.wav");
 				board.joinRoom(code.getText());
 			}
 		});

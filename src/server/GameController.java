@@ -273,7 +273,7 @@ public class GameController extends Thread {
 				}else if(gameInfo.itemBox[i][2]==0) {
 					gameInfo.p1_HP -= 10;
 				}else if(gameInfo.itemBox[i][2]==2) {
-					gameInfo.p1Super += 5;
+					gameInfo.p1Super += 10;
 				}
 			}
 			
@@ -285,7 +285,7 @@ public class GameController extends Thread {
 				}else if(gameInfo.itemBox[i][2]==0) {
 					gameInfo.p2_HP -= 10;
 				}else if(gameInfo.itemBox[i][2]==2) {
-					gameInfo.p2Super += 5;
+					gameInfo.p2Super += 10;
 				}
 			}
 			

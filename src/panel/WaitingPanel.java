@@ -34,6 +34,7 @@ public class WaitingPanel extends JPanel {
         gameOutButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				GamePanel.makeAudio("click.wav");
 				board.gameOut();
 			}
 		});

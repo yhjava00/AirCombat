@@ -78,7 +78,8 @@ public class ClientThread extends Thread {
 			
 			System.out.println("Client Disconnect");
 			
-			gameController.numOfPlayer--;
+			if(gameController!=null)
+				gameController.numOfPlayer--;
 			
 		}
 	}

@@ -15,8 +15,6 @@ public class AirCombatServer {
 	public AirCombatServer() {
 		try {
 			
-//			new TestThread().start();
-			
 			gameMap.put("", null);
 			
 			server = new ServerSocket(1234);
@@ -36,20 +34,6 @@ public class AirCombatServer {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-	}
-	
-	class TestThread extends Thread {
-		@Override
-		public void run() {
-			while(true) {
-				try {
-					Thread.sleep(1000);
-				} catch (Exception e) {
-					// TODO: handle exception
-				}
-				System.out.println(gameMap);
-			}
 		}
 	}
 	

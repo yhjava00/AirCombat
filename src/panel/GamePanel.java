@@ -78,6 +78,11 @@ public class GamePanel extends JPanel{
 	
 	private boolean inGame;
 	
+	private int bullet_cnt;
+	private int bullet2_cnt;
+	private int boom_cnt;
+	private int item_cnt;
+	
 	private int backgroundLocate = 0;
 	
 	private Clip bgm;
@@ -102,6 +107,7 @@ public class GamePanel extends JPanel{
 		p1Btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				makeAudio("click.wav");
 				clientRequest.add("i want p1");
 			}
 		});
@@ -110,6 +116,7 @@ public class GamePanel extends JPanel{
 		p2Btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				makeAudio("click.wav");
 				clientRequest.add("i want p2");
 			}
 		});
@@ -119,6 +126,7 @@ public class GamePanel extends JPanel{
 		lv1Btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				makeAudio("click.wav");
 				clientRequest.add("select lv1");
 			}
 		});
@@ -126,6 +134,7 @@ public class GamePanel extends JPanel{
 		lv2Btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				makeAudio("click.wav");
 				clientRequest.add("select lv2");
 			}
 		});
@@ -133,6 +142,7 @@ public class GamePanel extends JPanel{
 		lv3Btn.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				makeAudio("click.wav");
 				clientRequest.add("select lv3");
 			}
 		});
@@ -216,6 +226,10 @@ public class GamePanel extends JPanel{
 		backgroundMoveThread = new BackGroundMoveThread();
 		backgroundMoveThread.start();
 		
+		bullet_cnt = 0;
+		bullet2_cnt = 0;
+		boom_cnt = 0;
+		item_cnt = 0;
 	}
 	
 	public void gameStop() {
@@ -226,8 +240,8 @@ public class GamePanel extends JPanel{
 		inGame = false;
 	}
 	
-	private void makeAudio(String name) {
-
+	public static void makeAudio(String name) {
+		
 		try {
 			Clip clip = AudioSystem.getClip();
 			AudioInputStream inputStream = AudioSystem.getAudioInputStream(
@@ -310,6 +324,9 @@ public class GamePanel extends JPanel{
 			g.drawImage(wallImg, gameInfo.wall[i][0], gameInfo.wall[i][1], null); // 추가			
 		}
 		
+		int new_bullet_cnt = 0;
+		int new_bullet2_cnt = 0;
+		
 		for(int[] bullet : gameInfo.bulletSet) {
 			
 			if(bullet[4]==0)
@@ -318,41 +335,56 @@ public class GamePanel extends JPanel{
 			if(bullet[2]==1) {
 				
 				if(bullet[3]<0) {
-					if(bullet[1]>=MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20 - 10)
-						makeAudio("gun1.wav");
+					new_bullet_cnt++;
 					g.drawImage(p1Wave, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
-				}
-				else {
-					if(bullet[1]>=MAP_HEIGHT - PLANE_HEIGHT - BULLET_HEIGHT - 20 - 10)
-						makeAudio("gun2.wav");
+				}else {
+					new_bullet2_cnt++;
 					g.drawImage(p1WaveLV1, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
 				}
 			}else if(bullet[2]==2) {
 				
 				if(bullet[3]<0) {
-					if(bullet[1]<=PLANE_HEIGHT + 10)
-						makeAudio("gun1.wav");
+					new_bullet_cnt++;
 					g.drawImage(p2Wave, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
-				}
-				else {
-					if(bullet[1]<=PLANE_HEIGHT + 10)
-						makeAudio("gun2.wav");					
+				}else {			
+					new_bullet2_cnt++;
 					g.drawImage(p2WaveLV1, bullet[0]-(BULLET_WIDTH/2), bullet[1], null);
 				}
+				
 			}
 		}
 		
+		for(int i=0; i<new_bullet_cnt-bullet_cnt; i++) {
+			makeAudio("gun1.wav");
+		}
+		for(int i=0; i<new_bullet2_cnt-bullet2_cnt; i++) {
+			makeAudio("gun2.wav");
+		}
+		
+		bullet_cnt = new_bullet_cnt;
+		bullet2_cnt = new_bullet2_cnt;
+		
+		int new_boom_cnt = 0;
 		for(int[] boom : gameInfo.boom) {
 			if(boom[2]>0) {
+				new_boom_cnt++;
 				g.drawImage(boomImg, boom[0]-20, boom[1] , null);
 			}
 		}
 		
+		for(int i=0; i<new_boom_cnt-boom_cnt; i++) {
+			makeAudio("hit.wav");
+		}
 		
+		boom_cnt = new_boom_cnt;
+		
+		int new_item_cnt = 0;
 		for(int[] item : gameInfo.itemBox) {
 			
 			if(item[4]==0)
 				continue;
+			
+			new_item_cnt++;
 			
 			if(item[2]==0) 				
 				g.drawImage(damageImg, item[0], item[1], null);
@@ -361,6 +393,12 @@ public class GamePanel extends JPanel{
 			else if(item[2]==2) 
 				g.drawImage(superImg, item[0], item[1], null);
 		}
+		
+		for(int i=0; i<item_cnt-new_item_cnt; i++) {
+			makeAudio("ring.wav");
+		}
+		
+		item_cnt = new_item_cnt;
 		
 	}
 	
