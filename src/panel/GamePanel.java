@@ -90,6 +90,8 @@ public class GamePanel extends JPanel{
 	public GameInfo gameInfo;
 	public PlayerInfo pInfo;
 
+	public static boolean mute = false;
+	
 	protected Set<String> clientRequest;
 	
 	private Thread backgroundMoveThread;
@@ -211,14 +213,17 @@ public class GamePanel extends JPanel{
 		
 		inGame = true;
 		
-		try {
-			bgm = AudioSystem.getClip();
-			AudioInputStream inputStream = AudioSystem.getAudioInputStream(
-					GamePanel.class.getResourceAsStream("../audio/bgm.wav"));
-			bgm.open(inputStream);
-			bgm.start();
-			bgm.loop(-1);
-		} catch (Exception e) {}
+		if(!mute) {
+			
+			try {
+				bgm = AudioSystem.getClip();
+				AudioInputStream inputStream = AudioSystem.getAudioInputStream(
+						GamePanel.class.getResourceAsStream("../audio/bgm.wav"));
+				bgm.open(inputStream);
+				bgm.start();
+				bgm.loop(-1);
+			} catch (Exception e) {}
+		}
 		
 		repaintThread = new RepaintThread();
 		repaintThread.start();
@@ -241,6 +246,9 @@ public class GamePanel extends JPanel{
 	}
 	
 	public static void makeAudio(String name) {
+		
+		if(mute)
+			return;
 		
 		try {
 			Clip clip = AudioSystem.getClip();

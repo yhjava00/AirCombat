@@ -1,6 +1,5 @@
 package client;
 
-import java.awt.Color;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
@@ -65,9 +64,14 @@ public class AirCombatClient {
 				
 				info.clear();				
 			}
-			sck.close();
 		} catch (Exception e) {
 			e.printStackTrace();
+		}finally {
+			try {
+				ois.close();
+				oos.close();
+				sck.close();
+			} catch (Exception e2) {}
 		}
 	}
 	
@@ -122,33 +126,10 @@ public class AirCombatClient {
 		for(String request : serverRequest) {
 			switch (request) {
 			case "roomIn":
-				WaitingPanel.setCode((String) info.get("roomIn"));
-				
-				waitingBoard.startPage.setVisible(false);
-				waitingBoard.waitingPage.setVisible(true);
-
-				gamePanel.addLabelAndButton("");
-				
-				gameBoard = new GameBoard(gamePanel);
-				
-				gamePanel.gameStart();
-				
+				roomIn();
 				break;
 			case "gameInfo":
-				gamePanel.gameInfo = (GameInfo) info.get("gameInfo");
-				
-				if(gamePanel.gameInfo.chooseP1) {
-					gamePanel.p1Btn.setIcon(gamePanel.SelectedP1);
-				}else {
-					gamePanel.p1Btn.setIcon(gamePanel.Player01Btn);
-				}
-				if(gamePanel.gameInfo.chooseP2) {
-					gamePanel.p2Btn.setIcon(gamePanel.SelectedP2);
-				}else {
-					gamePanel.p2Btn.setIcon(gamePanel.Player02Btn);
-				}
-				
-				clientRequest.add("pInfo");
+				gameInfo();
 				break;
 			case "selectLV":
 				gamePanel.removeLabelAndButton();
@@ -163,5 +144,36 @@ public class AirCombatClient {
 				break;
 			}
 		}
+	}
+	
+	private void roomIn() {
+		WaitingPanel.setCode((String) info.get("roomIn"));
+		
+		waitingBoard.startPage.setVisible(false);
+		waitingBoard.waitingPage.setVisible(true);
+
+		gamePanel.addLabelAndButton("");
+		
+		gameBoard = new GameBoard(gamePanel);
+		
+		gamePanel.gameStart();
+		
+	}
+	
+	private void gameInfo() {
+		gamePanel.gameInfo = (GameInfo) info.get("gameInfo");
+		
+		if(gamePanel.gameInfo.chooseP1) {
+			gamePanel.p1Btn.setIcon(gamePanel.SelectedP1);
+		}else {
+			gamePanel.p1Btn.setIcon(gamePanel.Player01Btn);
+		}
+		if(gamePanel.gameInfo.chooseP2) {
+			gamePanel.p2Btn.setIcon(gamePanel.SelectedP2);
+		}else {
+			gamePanel.p2Btn.setIcon(gamePanel.Player02Btn);
+		}
+		
+		clientRequest.add("pInfo");
 	}
 }

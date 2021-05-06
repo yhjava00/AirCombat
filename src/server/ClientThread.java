@@ -55,7 +55,7 @@ public class ClientThread extends Thread {
 			
 			while(!info.containsKey("exit")) {
 
-				Thread.sleep(1);
+				sleep(1);
 
 				info = (Map) ois.readObject();
 				
@@ -72,7 +72,6 @@ public class ClientThread extends Thread {
 				oos.reset();
 				
 			}
-			sck.close();
 		} catch (Exception e) {
 //			e.printStackTrace();
 			
@@ -81,6 +80,12 @@ public class ClientThread extends Thread {
 			if(gameController!=null)
 				gameController.numOfPlayer--;
 			
+		}finally {
+			try {
+				ois.close();
+				oos.close();
+				sck.close();
+			} catch (Exception e2) {}
 		}
 	}
 	

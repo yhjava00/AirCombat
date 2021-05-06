@@ -83,8 +83,9 @@ public class GameController extends Thread {
 	public void run() {
 		
 		while(numOfPlayer>0) {
+			
 			try {
-				Thread.sleep(1);
+				sleep(1);
 			} catch (Exception e) {}
 			
 			if(gameInfo.chooseP1&&gameInfo.chooseP2) {
@@ -106,7 +107,7 @@ public class GameController extends Thread {
 			
 			while(inGame) {
 				try {
-					Thread.sleep(1);
+					sleep(1);
 				} catch (Exception e) {}
 				
 				playerMove();
@@ -402,10 +403,10 @@ public class GameController extends Thread {
 
 			// 추가
 			for(int j=0; j<gameInfo.wall.length; j++) {
-				if ((bullet[0] >= gameInfo.wall[j][0]) && (bullet[0] <= (gameInfo.wall[j][0] + 120))&&bullet[3]<0) { // 총알이 벽1에 막혔을때 총알 삭제
-					if (bullet[1] == gameInfo.wall[j][1] + 12)// 아래쪽 플레이어 총알이 벽에 막혔을때 총알 삭제
+				if ((bullet[0] >= gameInfo.wall[j][0]) && (bullet[0] <= (gameInfo.wall[j][0] + 120))&&bullet[3]<0) {
+					if (bullet[1] == gameInfo.wall[j][1] + 12)
 						bullet[2]=2;
-					if (bullet[1] == gameInfo.wall[j][1] - 15)// 위쪽 플레이어 총알이 벽에 막혔을때 총알 삭제
+					if (bullet[1] == gameInfo.wall[j][1] - 15)
 						bullet[2]=1;
 				}						
 			}
@@ -594,5 +595,4 @@ public class GameController extends Thread {
 			}
 		}
 	}
-	
 }
