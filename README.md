@@ -1,5 +1,8 @@
 # AirCombat
   2인용 슈팅게임
+  
+## 구동 영상
+https://www.youtube.com/watch?v=94B7LS4UJ18
 
 ## 개발 정보
 개발 인원 -> 2명   
